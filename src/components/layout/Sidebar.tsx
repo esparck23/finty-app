@@ -37,8 +37,8 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, isDesktopExpanded, setI
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
+    } catch {
+      router.push('/login');
     }
   };
 

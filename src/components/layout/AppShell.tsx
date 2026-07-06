@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Menu } from 'lucide-react';
+import { Toaster } from '@/components/ui/Toaster';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -34,6 +35,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      <Toaster />
     </div>
   );
 }

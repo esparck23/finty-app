@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
           FROM transactions t
           LEFT JOIN categories c ON t.category_id = c.id
           WHERE ${where}
-          ORDER BY t.created_at ASC
+          ORDER BY t.created_at DESC
           LIMIT ? OFFSET ?`,
     args: [...args, limit, offset],
   });

@@ -55,7 +55,10 @@ export function ScanResultView({
   onCancel,
 }: ScanResultViewProps) {
   const [selectedType, setSelectedType] = useState<'income' | 'expense' | null>(null);
+  const [rescanAttempts, setRescanAttempts] = useState(0);
+  const MAX_RESCAN_ATTEMPTS = 3;
   const isTransferencia = esTransferencia(result);
+  const isRescanBlocked = rescanAttempts >= MAX_RESCAN_ATTEMPTS;
 
   const confidencePercent = Math.round(result.confidence * 100);
   const confidenceColor =
@@ -66,6 +69,12 @@ export function ScanResultView({
       : 'text-red-400';
 
   const canApply = isTransferencia ? selectedType !== null : true;
+
+  const handleRescan = () => {
+    if (isRescanBlocked) return;
+    setRescanAttempts((prev) => prev + 1);
+    onRescan();
+  };
 
   return (
     <div className="card-glass p-6 space-y-4">
@@ -121,7 +130,7 @@ export function ScanResultView({
         )}
         {result.rif_ci && (
           <div className="p-3 bg-white/5 rounded-lg border border-white/10 col-span-2">
-            <p className="text-xs text-slate-500 mb-1">RIF/CI</p>
+            <p className="text-xs text-slate-500 mb-1">RIF</p>
             <p className="text-white font-medium font-mono">{result.rif_ci}</p>
           </div>
         )}
@@ -166,6 +175,14 @@ export function ScanResultView({
         </div>
       )}
 
+      {isRescanBlocked && (
+        <div className="text-center space-y-2">
+          <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+            Has alcanzado el límite de 3 re-escaneos. Completa los datos manualmente en el formulario.
+          </p>
+        </div>
+      )}
+
       {/* Botones de acción */}
       <div className="flex gap-2 pt-2">
         <button
@@ -178,10 +195,15 @@ export function ScanResultView({
         </button>
         <button
           type="button"
-          onClick={onRescan}
-          className="btn-danger flex-1"
+          disabled={isRescanBlocked}
+          onClick={handleRescan}
+          className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+            isRescanBlocked
+              ? 'bg-white/5 text-slate-600 cursor-not-allowed'
+              : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/10'
+          }`}
         >
-          🔄 Re-escanear
+          🔄 Re-escanear ({MAX_RESCAN_ATTEMPTS - rescanAttempts}/3)
         </button>
       </div>
       <button

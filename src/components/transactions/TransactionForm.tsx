@@ -43,6 +43,8 @@ export function TransactionForm({
   const [ratesError, setRatesError] = useState(false);
   const [selectedRate, setSelectedRate] = useState<string | null>(null);
   const [exchangeTouched, setExchangeTouched] = useState(false);
+const [isOtherBank, setIsOtherBank] = useState(false);
+const [customBank, setCustomBank] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState<TransactionInput | null>(null);
   const [detectedTransactionType, setDetectedTransactionType] = useState<'expense' | 'income' | 'exchange' | 'unknown'>('unknown');
@@ -71,6 +73,7 @@ export function TransactionForm({
   const transactionType = form.watch('type');
   const currencyPrimary = form.watch('currency_primary');
   const receiptType = form.watch('receipt_type');
+  const transferProvider = form.watch('transfer_provider');
   const isExchange = transactionType === 'exchange';
   const amountUsd = Number(form.watch('amount_usd'));
   const amountBs = Number(form.watch('amount_bs'));
@@ -105,7 +108,33 @@ export function TransactionForm({
       .finally(() => setRatesLoading(false));
   }, [isExchange]);
 
-  const exchangeDirection: ExchangeDirection = currencyPrimary === 'USD' ? 'usd_to_bs' : 'bs_to_usd';
+  const VENEZUELAN_BANKS = [
+  'Banco de Venezuela',
+  'BBVA Provincial',
+  'Mercantil Banco',
+  'Banesco',
+  'Banco Nacional de Crédito (BNC)',
+  'Banco Exterior',
+  'Banco Caroní',
+  'Banco Plaza',
+  '100% Banco',
+  'Banco del Tesoro',
+  'Banco Agrícola',
+  'Banco Bicentenario',
+  'Banco del Pueblo Soberano',
+  'Banco de la Fuerza Armada (BANFANB)',
+  'Banco Activo',
+  'Bancamiga',
+  'Banplus',
+  'BOD (Banco Occidental de Descuento)',
+  'Banco Fondo Común (BFC)',
+  'Banco Sofitasa',
+  'Pago Móvil',
+  'Binance',
+  'Otros',
+] as const;
+
+const exchangeDirection: ExchangeDirection = currencyPrimary === 'USD' ? 'usd_to_bs' : 'bs_to_usd';
 
   const filteredCategories = categories.filter((c) => c.type === transactionType);
 
@@ -123,6 +152,16 @@ export function TransactionForm({
       }
     }
   }, [isExchange, categoriesLoading, categories, form, initialData?.category_id]);
+
+  // Inicializar customBank si el valor actual no está en la lista de bancos
+  useEffect(() => {
+    const current = form.getValues('transfer_provider');
+    if (current && !VENEZUELAN_BANKS.includes(current as any)) {
+      setCustomBank(current);
+      setIsOtherBank(true);
+      form.setValue('transfer_provider', 'Otros');
+    }
+  }, [form]);
 
   // Aplicar scanResult al formulario
   useEffect(() => {
@@ -192,10 +231,16 @@ export function TransactionForm({
 
           if (genericMatch) {
             form.setValue('category_id', genericMatch.id);
-          } else {
-            console.warn(`No se encontró categoría para "${scanResult.category_name}"`);
           }
         }
+      }
+    }
+
+    // 5b. Si es ingreso por transferencia, forzar categoría "Transferencia recibida"
+    if (scanType === 'income' && scanResult.receipt_type === 'transfer') {
+      const transferCategory = categories.find(c => c.name === 'Transferencia recibida');
+      if (transferCategory) {
+        form.setValue('category_id', transferCategory.id);
       }
     }
 
@@ -274,6 +319,16 @@ export function TransactionForm({
       setShowConfirm(true);
       return;
     }
+
+    // Validación condicional: si hay número de operación, banco es obligatorio
+    if (data.receipt_type === 'transfer' && data.transfer_operation && !data.transfer_provider) {
+      form.setError('transfer_provider', {
+        type: 'manual',
+        message: 'Selecciona el banco o plataforma',
+      });
+      return;
+    }
+
     await onSubmit(data);
   };
 
@@ -516,7 +571,7 @@ export function TransactionForm({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-2">RIF / CI</label>
+                <label className="block text-sm text-slate-400 mb-2">RIF</label>
                 <input
                   type="text"
                   {...form.register('tax_id')}
@@ -551,12 +606,54 @@ export function TransactionForm({
             <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Datos de Transferencia</p>
             <div>
               <label className="block text-sm text-slate-400 mb-2">Banco / Plataforma</label>
-              <input
-                type="text"
-                {...form.register('transfer_provider')}
-                className="input-field"
-                placeholder="Banesco, Mercantil, Pago Móvil..."
-              />
+              <div className="relative">
+                <select
+                  value={isOtherBank ? 'Otros' : (transferProvider ?? '')}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'Otros') {
+                      setIsOtherBank(true);
+                      setCustomBank('');
+                      form.setValue('transfer_provider', 'Otros');
+                    } else {
+                      setIsOtherBank(false);
+                      setCustomBank('');
+                      form.setValue('transfer_provider', val);
+                    }
+                  }}
+                  className="input-field appearance-none pr-10"
+                >
+                  <option value="">Seleccionar...</option>
+                  {VENEZUELAN_BANKS.filter(b => b !== 'Otros').map((bank) => (
+                    <option key={bank} value={bank}>{bank}</option>
+                  ))}
+                  <option value="Otros">Otros</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              {isOtherBank && (
+                <input
+                  type="text"
+                  value={customBank}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomBank(val);
+                    form.setValue('transfer_provider', val || 'Otros');
+                  }}
+                  className="input-field mt-2"
+                  placeholder="Especifica el banco o plataforma..."
+                  autoFocus
+                />
+              )}
+              {form.formState.errors.transfer_provider && (
+                <p className="text-red-400 text-sm mt-1">
+                  {form.formState.errors.transfer_provider.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm text-slate-400 mb-2">Nro. Operación / Referencia</label>

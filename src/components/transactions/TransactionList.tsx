@@ -15,6 +15,12 @@ interface TxItem {
   description?: string | null;
   transaction_date: string;
   created_at: string;
+  receipt_type?: string | null;
+  provider_name?: string | null;
+  tax_id?: string | null;
+  document_type?: string | null;
+  transfer_provider?: string | null;
+  transfer_operation?: string | null;
 }
 
 interface TransactionListProps {

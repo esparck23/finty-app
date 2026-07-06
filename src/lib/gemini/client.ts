@@ -16,7 +16,8 @@ REGLAS:
 
 CLASIFICACIÓN DEL COMPROBANTE:
 - "receipt_type": determina si es "invoice" (factura/recibo de comercio) o "transfer" (comprobante de transferencia/Pago Móvil).
-- Para facturas: extrae "provider_name" (nombre del comercio), "tax_id" (RIF o CI del proveedor), "document_type" ("rif" o "ci").
+- Para facturas: extrae "provider_name" (nombre del comercio), "tax_id" (RIF del proveedor, formato J-12345678-9), "document_type" (siempre "rif").
+- IMPORTANTE: Ignora completamente cualquier CI (cédula de identidad) del cliente. Solo extrae el RIF del proveedor.
 - Para transferencias: extrae "transfer_provider" (banco o plataforma: Banesco, Mercantil, Pago Móvil, etc.), "transfer_operation" (número de operación, referencia o recibo).`;
 
 const SCAN_RESPONSE_SCHEMA: ResponseSchema = {

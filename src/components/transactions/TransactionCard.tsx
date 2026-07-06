@@ -13,6 +13,12 @@ interface TransactionCardProps {
     description?: string | null;
     transaction_date: string;
     created_at: string;
+    receipt_type?: string | null;
+    provider_name?: string | null;
+    tax_id?: string | null;
+    document_type?: string | null;
+    transfer_provider?: string | null;
+    transfer_operation?: string | null;
   };
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -83,6 +89,28 @@ export function TransactionCard({ transaction: tx, onEdit, onDelete }: Transacti
 
       {tx.description && (
         <p className="text-sm text-slate-400 line-clamp-2">{tx.description}</p>
+      )}
+
+      {/* Metadata contextual según tipo de comprobante */}
+      {tx.receipt_type === 'invoice' && (tx.provider_name || tx.tax_id) && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+          {tx.provider_name && (
+            <span className="truncate max-w-[200px]">{tx.provider_name}</span>
+          )}
+          {tx.tax_id && (
+            <span className="font-mono text-slate-400">{tx.tax_id}</span>
+          )}
+        </div>
+      )}
+      {tx.receipt_type === 'transfer' && (tx.transfer_provider || tx.transfer_operation) && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+          {tx.transfer_provider && tx.transfer_provider !== 'Otros' && (
+            <span>{tx.transfer_provider}</span>
+          )}
+          {tx.transfer_operation && (
+            <span className="font-mono text-slate-400">Op. {tx.transfer_operation}</span>
+          )}
+        </div>
       )}
 
       {(onEdit || onDelete) && (

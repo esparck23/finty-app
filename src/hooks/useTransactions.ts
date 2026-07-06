@@ -38,7 +38,7 @@ export function useTransactions() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       const created = json.data as Transaction;
-      setTransactions((prev) => [...prev, created]);
+      setTransactions((prev) => [created, ...prev]);
       return created;
     } catch (err) {
       setError(String(err));
