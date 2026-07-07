@@ -124,7 +124,8 @@ export default function DashboardPage() {
 
   const expenseCategories = byCategory
     .filter((c) => c.type === 'expense')
-    .map((c) => ({ name: c.category, value: c.total_usd }));
+    .map((c) => ({ name: c.category, value: c.total_usd }))
+    .filter((c) => c.value > 0);
 
   const incomeUSD = summary.income?.total_usd ?? 0;
   const expenseUSD = summary.expense?.total_usd ?? 0;
