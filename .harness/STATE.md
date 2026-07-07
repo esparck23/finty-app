@@ -1,10 +1,10 @@
 **STATE — Finty**
 
-**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia
-Última sesión: 2026-07-05
-Commit: d574c66
+**Etapa actual: 5/7 — Modo Offline (PWA)
+Última sesión: 2026-07-07
+Commit: (ver git log)
 Salud: 🟢 verde
-Próxima acción: Iniciar Etapa 4 — API pública + gráficos Recharts
+Próxima acción: Iniciar Etapa 5 — PWA offline con Service Worker
 Bloqueos activos: ninguno
 No tocar:
 trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE va desde código.

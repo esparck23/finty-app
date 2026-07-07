@@ -73,15 +73,17 @@ Criterios de aceptación:
  Sin regresiones en funcionalidad existente
  
 **Etapa 4 — Dashboard Avanzado + Transparencia
-Estado: ⬜ NO INICIADA
+Estado: ✅ COMPLETADA
+Fecha cierre: 2026-07-07
 Gate: requiere aprobación humana antes de Etapa 5
 Criterios de aceptación:
  API /api/public/summary leyendo vista public_summary de SQLite
+ API /api/public/rates con tasas de cambio recientes
  Página pública /transparencia sin autenticación con datos agrupados
- Dashboard privado con gráficos (Recharts) — distribución de gastos por categoría
- Consultas SQL agregadas (SUM, GROUP BY) en vez de traer todas las filas
- Filtros por periodo en dashboard
-Notas: El dashboard actual es mínimo (solo balance). Esta etapa lo expande.
+ Dashboard privado con gráficos Recharts — barras mensuales + pie por categoría
+ Consultas SQL agregadas (SUM, GROUP BY) en /api/dashboard/stats en vez de traer todas las filas
+ Filtros por periodo en dashboard (todo, mes, 3 meses, año, personalizado)
+Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboard con BarChart (ingresos vs egresos) y PieChart (gastos por categoría).
 
 **Etapa 5 — Modo Offline (PWA
 Estado: ⬜ NO INICIADA
