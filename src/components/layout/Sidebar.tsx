@@ -11,7 +11,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  Globe
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,6 +30,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, isDesktopExpanded, setI
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, enabled: true },
     { name: 'Transacciones', href: '/transactions', icon: ArrowLeftRight, enabled: true },
     { name: 'Categorías', href: '/categories', icon: Tags, enabled: true },
+    { name: 'Transparencia', href: '/transparencia', icon: Globe, enabled: true },
     { name: 'Reportes', href: '/reports', icon: FileText, enabled: false },
     { name: 'Auditoría', href: '/audit', icon: Shield, enabled: false },
   ];
