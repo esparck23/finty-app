@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, TrendingUp, TrendingDown, Wallet, Share2 } from 'lucide-react';
+import { Plus, Share2 } from 'lucide-react';
 import { formatUSD, formatBs } from '@/lib/utils/currency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -33,6 +33,10 @@ interface SummaryData {
   income?: { total_usd: number; total_bs: number };
   expense?: { total_usd: number; total_bs: number };
   exchange?: { total_usd: number; total_bs: number };
+}
+
+interface ExchangeByCurrency {
+  [key: string]: { total_usd: number; total_bs: number };
 }
 
 type PeriodKey = 'all' | 'month' | '3months' | 'year' | 'custom';
@@ -78,6 +82,7 @@ export default function DashboardPage() {
   const [monthly, setMonthly] = useState<MonthlyData[]>([]);
   const [byCategory, setByCategory] = useState<CategoryData[]>([]);
   const [summary, setSummary] = useState<SummaryData>({});
+  const [exchangeByCurrency, setExchangeByCurrency] = useState<ExchangeByCurrency>({});
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodKey>('all');
   const [customFrom, setCustomFrom] = useState('');
@@ -104,6 +109,7 @@ export default function DashboardPage() {
         setMonthly(json.monthly);
         setByCategory(json.byCategory);
         setSummary(json.summary);
+        setExchangeByCurrency(json.exchangeByCurrency ?? {});
       }
     } catch {
       // silently fail
@@ -137,10 +143,21 @@ export default function DashboardPage() {
 
   const incomeUSD = summary.income?.total_usd ?? 0;
   const expenseUSD = summary.expense?.total_usd ?? 0;
-  const balanceUSD = incomeUSD - expenseUSD;
   const incomeBs = summary.income?.total_bs ?? 0;
   const expenseBs = summary.expense?.total_bs ?? 0;
-  const balanceBs = incomeBs - expenseBs;
+
+  const exchangeOutUSD = exchangeByCurrency['USD']?.total_usd ?? 0;
+  const exchangeInBs = exchangeByCurrency['USD']?.total_bs ?? 0;
+  const exchangeInUSD = exchangeByCurrency['Bs']?.total_usd ?? 0;
+  const exchangeOutBs = exchangeByCurrency['Bs']?.total_bs ?? 0;
+
+  const totalIncomeUSD = incomeUSD + exchangeInUSD;
+  const totalExpenseUSD = expenseUSD + exchangeOutUSD;
+  const totalIncomeBs = incomeBs + exchangeInBs;
+  const totalExpenseBs = expenseBs + exchangeOutBs;
+
+  const balanceUSD = totalIncomeUSD - totalExpenseUSD;
+  const balanceBs = totalIncomeBs - totalExpenseBs;
 
   return (
     <div className="p-4 md:p-8 space-y-6 relative min-h-full">
@@ -203,32 +220,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card-glass p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={16} className="text-green-400" />
-            <span className="text-xs text-slate-400">Ingresos</span>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="card-glass p-5 space-y-2">
+          <p className="text-sm text-slate-400">Balance</p>
+          <div className="flex items-center gap-2">
+            <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
+            <p className={`text-lg font-semibold ${balanceBs >= 0 ? 'text-blue-300/80' : 'text-red-300/80'}`}>
+              {formatBs(balanceBs)}
+            </p>
           </div>
-          <p className="text-lg font-semibold text-green-400">{formatUSD(incomeUSD)}</p>
-          <p className="text-xs text-slate-500">{formatBs(incomeBs)}</p>
-        </div>
-        <div className="card-glass p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingDown size={16} className="text-red-400" />
-            <span className="text-xs text-slate-400">Egresos</span>
+          <div className="flex items-center gap-2">
+            <span className="w-8 text-xs font-medium text-slate-500">USD</span>
+            <p className={`text-xl font-bold ${balanceUSD >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+              {formatUSD(balanceUSD)}
+            </p>
           </div>
-          <p className="text-lg font-semibold text-red-400">{formatUSD(expenseUSD)}</p>
-          <p className="text-xs text-slate-500">{formatBs(expenseBs)}</p>
-        </div>
-        <div className="card-glass p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet size={16} className="text-blue-400" />
-            <span className="text-xs text-slate-400">Balance</span>
-          </div>
-          <p className={`text-lg font-semibold ${balanceUSD >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-            {formatUSD(balanceUSD)}
-          </p>
-          <p className="text-xs text-slate-500">{formatBs(balanceBs)}</p>
         </div>
       </div>
 
