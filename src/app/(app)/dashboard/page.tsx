@@ -232,7 +232,7 @@ export default function DashboardPage() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
                   labelStyle={{ color: '#e2e8f0' }}
-                  formatter={(value: number) => formatUSD(value)}
+                  formatter={(value) => formatUSD(Number(value))}
                 />
                 <Legend />
                 <Bar dataKey="income" name="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -258,14 +258,14 @@ export default function DashboardPage() {
                   innerRadius={50}
                   outerRadius={90}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   labelLine={{ stroke: '#64748b' }}
                 >
                   {expenseCategories.map((_, index) => (
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatUSD(value)} />
+                <Tooltip formatter={(value) => formatUSD(Number(value))} />
                 <Legend
                   verticalAlign="bottom"
                   wrapperStyle={{ fontSize: 12 }}

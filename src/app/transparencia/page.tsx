@@ -123,7 +123,7 @@ export default function TransparenciaPage() {
                       <td className="px-4 py-3 text-right text-slate-400">{row.num_transactions}</td>
                     </tr>
                   ))
-                ))}
+                )}
               </tbody>
             </table>
           </div>
