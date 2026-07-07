@@ -36,8 +36,24 @@ Decisión: Imagen transitoria, no se persiste en R2 ni otro storage
 Razón: Elimina dependencia S3, 5 env vars, vulnerabilidad SSRF, y un salto de red
 Contexto: receipt_url existe en schema pero sin poblar. Decisión futura.
 
-**DEC-007 — Cotizave como fuente primaria de tasas
+**DEC-007 — Cotizave como fuente primaria de tasas**
 Fecha: 2026-07-04
 Decisión: Cotizave (BCV USD, BCV EUR, Binance P2P) con dolar-bcv-api como fallback
 Razón: Documentación profesional, status page, plan free generoso (1,500 req/mes), sin JWT
 Contexto: exchange_rates migrado a UNIQUE(date, source). Lazy fetch en TransactionForm.
+
+**DEC-008 — Reapertura Etapa 4 (feedback)**
+Fecha: 2026-07-07
+Decisión: Reabrir Etapa 4 para ajustes de dashboard/transparencia sin avanzar de etapa.
+Razón: Prueba de funcionalidad no conforme.
+Contexto/Feedback:
+- Gráfico "Gastos por categoría (USD)": "Servicios básicos 0%" comparte línea/col con Alimentos 0% y Otro gasto 0%; solo "Transporte" se muestra aparte.
+- Doble moneda en dashboard: además de USD, mostrar gastos/ingresos en Bolívares. Botones TODO/ESTE MES/etc deben reflejar gráficos para ambas monedas.
+- Cards Ingresos/Egresos/Balance deben mostrar valores en USD y Bolívares.
+- Transparencia: debe haber link/pestaña accesible desde navegación y un espacio de "share" en el Dashboard para compartir el acceso público a Transparencia.
+
+**DEC-009 — Dashboard: una sola card Balance**
+Fecha: 2026-07-07
+Decisión: Eliminar otras cards del Dashboard; dejar solo la card Balance.
+Razón: Feedback: las cards añadidas en Dashboard no van.
+Contexto: La card Balance del Dashboard debe ser exactamente la misma que Transacciones: mismo diseño, mismo patrón, mismo origen de datos.
