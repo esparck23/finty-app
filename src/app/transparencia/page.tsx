@@ -184,29 +184,29 @@ export default function TransparenciaPage() {
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Total Ingresos</p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
-              <p className="text-lg lg:text-base font-semibold text-emerald-300/80">{formatBs(totalIncomeBs)}</p>
+              <span className="w-8 shrink-0 text-xs font-medium text-slate-500">Bs</span>
+              <p className="min-w-0 flex-1 break-words text-base sm:text-lg font-semibold text-emerald-300/80">{formatBs(totalIncomeBs)}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">USD</span>
-              <p className="text-xl font-bold text-emerald-400">{formatUSD(totalIncomeUSD)}</p>
+              <p className="min-w-0 flex-1 break-words text-lg sm:text-xl font-bold text-emerald-400">{formatUSD(totalIncomeUSD)}</p>
             </div>
           </div>
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Total Egresos</p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
-              <p className="text-lg lg:text-base font-semibold text-red-300/80">{formatBs(totalExpenseBs)}</p>
+              <span className="w-8 shrink-0 text-xs font-medium text-slate-500">Bs</span>
+              <p className="min-w-0 flex-1 break-words text-base sm:text-lg font-semibold text-red-300/80">{formatBs(totalExpenseBs)}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">USD</span>
-              <p className="text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
+              <p className="min-w-0 flex-1 break-words text-lg sm:text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
             </div>
           </div>
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Balance</p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
+              <span className="w-8 shrink-0 text-xs font-medium text-slate-500">Bs</span>
               <p className={`text-lg lg:text-base font-semibold ${balanceBs >= 0 ? 'text-blue-300/80' : 'text-red-300/80'}`}>
                 {formatBs(balanceBs)}
               </p>
@@ -222,7 +222,7 @@ export default function TransparenciaPage() {
             <p className="text-sm text-slate-400">Transacciones</p>
             <div className="flex items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">#</span>
-              <p className="text-xl font-bold text-blue-400">{totalTx}</p>
+              <p className="min-w-0 flex-1 break-words text-lg sm:text-xl font-bold text-blue-400">{totalTx}</p>
             </div>
           </div>
         </div>
