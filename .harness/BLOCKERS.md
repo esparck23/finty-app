@@ -1,13 +1,12 @@
 **BLOCKERS — Finty**
 
-**BLK-001 — Vitest no resuelve tipos de Vite en Windows**
-Fecha: 2026-07-07
+**BLK-001 — Vitest no resuelve tipos de Vite en Windows (RESUELTO por migración a Jest)
+Fecha: 2026-07-07 | Resuelto: 2026-07-08 (DEC-018)
 Bloquea: Etapa 0 — Harness de Tests
-Síntoma: `vitest.config.ts` y tipos de `node_modules/vitest` reportan `TS2307 Cannot find module 'vite' / '@vitest/utils/display'`, aunque existen en disco.
-Causa probable: resolución de módulos TypeScript/Windows en este proyecto (`moduleResolution` no es `bundler/nodenext`), o dependencia transitiva de Vite faltante/rota tras instalación corrupta.
-Intento aplicado: reinstalación limpia de `node_modules`, `package-lock.json`, cache npm, y creación de `vitest.config.ts`.
-Regla de reintento: máx 3 intentos por problema antes de dejar bloqueado.
-Siguiente acción sugerida: cambiar `moduleResolution` a `bundler` en `tsconfig.json` o, si persiste, cambiar estrategia a Jest.
+Síntoma original: `vitest.config.ts` y tipos de `node_modules/vitest` reportan `TS2307 Cannot find module 'vite' / '@vitest/utils/display'`, aunque existen en disco.
+Causa probable: resolución de módulos TypeScript/Windows (`moduleResolution` no es `bundler/nodenext`), o dependencia transitiva de Vite faltante/rota.
+Intento aplicado: reinstalación limpia de `node_modules`, `package-lock.json`, cache npm, y creación de `vitest.config.ts`. Persistió.
+Resolución: DEC-010 + DEC-018 descartan Vitest en este proyecto Windows y migran la Etapa 0 a **Jest** (sin depender del pipeline Vite/rolldown). Qwen ejecuta la limpieza de Vitest y el andamiaje de Jest (DEC-018).
 
 **BLK-002 — No se pudo appendar DEC-016 en DECISIONS.md vía patch (texto duplicado)
 Fecha: 2026-07-07
