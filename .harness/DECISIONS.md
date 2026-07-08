@@ -69,3 +69,27 @@ Fecha: 2026-07-07
 Decisión: Marcar a Vibe como no productivo en tareas de setup largo para Etapa 0 en este proyecto; priorizar ejecución directa o Qoder para este tipo de trabajo.
 Razón: Vibe no cerró Etapa 0 dentro de 8 y 20 turnos seguidos, repitiendo planning sin entrega. En Etapa 4 con Qoder sí hubo commits concretos.
 Contexto: No se descarta Vibe para otras etapas. Revisar en DECISIONS.md en otro momento.
+
+**DEC-012 — Reapertura Etapa 4 (feedback 2)**
+Fecha: 2026-07-07
+Decisión: Reabrir Etapa 4 para ajustes visuales/funcionales de Dashboard y Transparencia.
+Razón: Prueba de funcionalidad no conforme.
+Contexto/Feedback:
+1. Gastos por categoría (Bs): en móviles el porcentaje no se ve; el gráfico es demasiado grande para el cuadro.
+2. Ingresos vs Egresos (Bs): eje/fecha debe mostrar MM/AAAA en español y con letras, por ejemplo "Junio 2026".
+3. Moneda gráficos: etiqueta actual sin sentido; texto debe decir exactamente "Gráficos según tipo de moneda:" y opciones "USD", "Bs".
+4. Falta buscador inteligente y botón exportar PDF en Transparencia. Queda anotado aparte como futuro; no bloquear Etapa 4 por esto.
+5. "/transparencia": eliminar texto innecesario "Datos extraídos directamente de la base de datos Finty".
+
+**DEC-013 — Reapertura Etapa 4 (feedback 3, Transparencia + Dashboard share)
+Fecha: 2026-07-07
+Decisión: Reabrir Etapa 4 para ajustes visuales/funcionales de la página /transparencia (y el cintillo de share del Dashboard).
+Razón: Prueba de funcionalidad no conforme en el listado público de Transparencia.
+Contexto/Feedback (punto a punto, uno a uno, para Qoder):
+1. El cintillo para copiar el enlace público de transparencia está bien hecho pero MAL UBICADO. Reubicar correctamente tanto para Móvil como para Desktop.
+2. Filtros: unificar todos en UN SOLO select list. Cambiar etiqueta "Personalizado" por "Rango de fechas". Por defecto debe quedar seleccionado "Todos".
+3. Para móvil y desktop: debe haber un FOOTER, así sea solo un separador, para dar distancia entre el fin del contenido y el fin de la pantalla (móvil).
+4. En la lista de Transparencia, la columna "#" no tiene razón de existir. O se convierte en un índice real de items (1, 2, 3...) o se elimina.
+5. Añadir PAGINACIÓN al listado de transparencia, con el MISMO modelo ya aplicado a Transacciones y Categorías.
+6. (ANOTADO APARTE — NO implementar en esta etapa) Buscador inteligente + botón exportar PDF en Transparencia. Referenciado por el usuario como "punto 9". Diferido a Etapa 6 (Reportes) según DEC-012 p4. No bloquear Etapa 4 por esto.
+Nota de alcance: los puntos 1-5 son los ejecutables ahora. El punto 6 queda registrado pero fuera de alcance hasta Etapa 6.

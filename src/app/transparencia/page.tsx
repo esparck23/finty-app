@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { formatUSD, formatBs } from '@/lib/utils/currency';
 
@@ -13,23 +13,87 @@ interface SummaryRow {
   num_transactions: number;
 }
 
+type FilterKey = 'all' | 'month' | '3months' | 'year' | 'custom';
+
+const filterLabels: Record<FilterKey, string> = {
+  all: 'Todos',
+  month: 'Este mes',
+  '3months': '3 meses',
+  year: 'Este año',
+  custom: 'Rango de fechas',
+};
+
+function getFilterDates(filter: FilterKey): { from: string; to: string } {
+  const now = new Date();
+  const to = now.toISOString().split('T')[0];
+  let from = '';
+
+  switch (filter) {
+    case 'month': {
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
+      from = d.toISOString().split('T')[0];
+      break;
+    }
+    case '3months': {
+      const d = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      from = d.toISOString().split('T')[0];
+      break;
+    }
+    case 'year': {
+      const d = new Date(now.getFullYear(), 0, 1);
+      from = d.toISOString().split('T')[0];
+      break;
+    }
+    default:
+      break;
+  }
+
+  return { from, to };
+}
+
 const typeLabels: Record<string, string> = {
   income: 'Ingreso',
   expense: 'Egreso',
   exchange: 'Cambio',
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function TransparenciaPage() {
   const [data, setData] = useState<SummaryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterKey>('all');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [page, setPage] = useState(1);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filter === 'custom') {
+        if (customFrom) params.set('from', customFrom);
+        if (customTo) params.set('to', customTo);
+      } else {
+        const { from, to } = getFilterDates(filter);
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+      }
+
+      const res = await fetch(`/api/public/summary?${params}`);
+      const json = await res.json();
+      setData(json.data ?? []);
+      setPage(1);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, customFrom, customTo]);
 
   useEffect(() => {
-    fetch('/api/public/summary')
-      .then((res) => res.json())
-      .then((json) => setData(json.data ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
   const totalIncomeUSD = data
     .filter((r) => r.type === 'income')
@@ -44,6 +108,10 @@ export default function TransparenciaPage() {
     .filter((r) => r.type === 'expense')
     .reduce((s, r) => s + r.total_bs, 0);
   const totalTx = data.reduce((s, r) => s + r.num_transactions, 0);
+
+  const totalPages = Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = data.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300">
@@ -87,12 +155,49 @@ export default function TransparenciaPage() {
           </div>
         </div>
 
+        <div className="mt-6 mb-4">
+          <label className="text-xs text-slate-500 block mb-1.5">Filtrar por periodo:</label>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as FilterKey)}
+            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white w-full sm:w-auto"
+          >
+            {(Object.keys(filterLabels) as FilterKey[]).map((key) => (
+              <option key={key} value={key}>
+                {filterLabels[key]}
+              </option>
+            ))}
+          </select>
+
+          {filter === 'custom' && (
+            <div className="flex flex-wrap gap-3 items-end mt-3">
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Desde</label>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Hasta</label>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-left">
-                  <th className="px-4 py-3 text-slate-400 font-medium text-right">#</th>
                   <th className="px-4 py-3 text-slate-400 font-medium">Tipo</th>
                   <th className="px-4 py-3 text-slate-400 font-medium">Categoría</th>
                   <th className="px-4 py-3 text-slate-400 font-medium text-right">Bs</th>
@@ -102,20 +207,19 @@ export default function TransparenciaPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                       Cargando datos...
                     </td>
                   </tr>
                 ) : data.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                       Sin datos disponibles
                     </td>
                   </tr>
                 ) : (
-                  data.map((row, i) => (
-                    <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="px-4 py-3 text-right text-slate-400">{row.num_transactions}</td>
+                  paginated.map((row, i) => (
+                    <tr key={`${row.type}-${row.category}-${row.currency_primary}-${i}`} className="border-b border-white/5 hover:bg-white/5">
                       <td className="px-4 py-3">
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
@@ -142,9 +246,34 @@ export default function TransparenciaPage() {
               </tbody>
             </table>
           </div>
+
+          {!loading && totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5">
+              <p className="text-xs text-slate-500">
+                Página {safePage} de {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  className="px-2.5 py-1 rounded-lg bg-white/10 text-slate-300 hover:bg-white/20 transition-colors text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={safePage >= totalPages}
+                  className="px-2.5 py-1 rounded-lg bg-white/10 text-slate-300 hover:bg-white/20 transition-colors text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <footer className="mt-8 text-center text-xs text-slate-600">
+        <div className="mt-12 border-t border-white/5" />
+        <footer className="mt-6 mb-8 text-center text-xs text-slate-600">
           <p>
             <Link href="/login" className="text-blue-500 hover:text-blue-400">
               Acceder al sistema
