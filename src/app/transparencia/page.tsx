@@ -12,6 +12,15 @@ interface SummaryRow {
   num_transactions: number;
 }
 
+interface TxRow {
+  type: string;
+  category: string;
+  currency_primary: string;
+  amount_usd: number;
+  amount_bs: number;
+  transaction_date: string;
+}
+
 type FilterKey = 'all' | 'month' | '3months' | 'year' | 'custom';
 
 const filterLabels: Record<FilterKey, string> = {
@@ -59,15 +68,17 @@ const typeLabels: Record<string, string> = {
 const ITEMS_PER_PAGE = 10;
 
 export default function TransparenciaPage() {
-  const [data, setData] = useState<SummaryRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [summaryData, setSummaryData] = useState<SummaryRow[]>([]);
+  const [transactionsData, setTransactionsData] = useState<TxRow[]>([]);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchSummaryData = useCallback(async () => {
+    setLoadingSummary(true);
     try {
       const params = new URLSearchParams();
       if (filter === 'custom') {
@@ -81,36 +92,83 @@ export default function TransparenciaPage() {
 
       const res = await fetch(`/api/public/summary?${params}`);
       const json = await res.json();
-      setData(json.data ?? []);
-      setPage(1);
+      setSummaryData(json.data ?? []);
     } catch {
       // silently fail
     } finally {
-      setLoading(false);
+      setLoadingSummary(false);
+    }
+  }, [filter, customFrom, customTo]);
+
+  const fetchTransactionsData = useCallback(async () => {
+    setLoadingTransactions(true);
+    try {
+      const params = new URLSearchParams();
+      if (filter === 'custom') {
+        if (customFrom) params.set('from', customFrom);
+        if (customTo) params.set('to', customTo);
+      } else {
+        const { from, to } = getFilterDates(filter);
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+      }
+
+      const res = await fetch(`/api/public/transactions?${params}`);
+      const json = await res.json();
+      setTransactionsData(json.data ?? []);
+      setPage(1); // Reset page to 1 when filters change
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingTransactions(false);
     }
   }, [filter, customFrom, customTo]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchSummaryData();
+    fetchTransactionsData();
+  }, [fetchSummaryData, fetchTransactionsData]);
 
-  const totalIncomeUSD = data
+  const incomeUSD = summaryData
     .filter((r) => r.type === 'income')
     .reduce((s, r) => s + r.total_usd, 0);
-  const totalExpenseUSD = data
-    .filter((r) => r.type === 'expense')
-    .reduce((s, r) => s + r.total_usd, 0);
-  const totalIncomeBs = data
+  const incomeBs = summaryData
     .filter((r) => r.type === 'income')
     .reduce((s, r) => s + r.total_bs, 0);
-  const totalExpenseBs = data
+
+  const expenseUSD = summaryData
+    .filter((r) => r.type === 'expense')
+    .reduce((s, r) => s + r.total_usd, 0);
+  const expenseBs = summaryData
     .filter((r) => r.type === 'expense')
     .reduce((s, r) => s + r.total_bs, 0);
-  const totalTx = data.reduce((s, r) => s + r.num_transactions, 0);
 
-  const totalPages = Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE));
+  const exchangeInUSD = summaryData
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'Bs')
+    .reduce((s, r) => s + r.total_usd, 0);
+  const exchangeOutUSD = summaryData
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'USD')
+    .reduce((s, r) => s + r.total_usd, 0);
+  const exchangeInBs = summaryData
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'USD')
+    .reduce((s, r) => s + r.total_bs, 0);
+  const exchangeOutBs = summaryData
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'Bs')
+    .reduce((s, r) => s + r.total_bs, 0);
+
+  const totalIncomeUSD = incomeUSD + exchangeInUSD;
+  const totalExpenseUSD = expenseUSD + exchangeOutUSD;
+  const totalIncomeBs = incomeBs + exchangeInBs;
+  const totalExpenseBs = expenseBs + exchangeOutBs;
+
+  const balanceUSD = totalIncomeUSD - totalExpenseUSD;
+  const balanceBs = totalIncomeBs - totalExpenseBs;
+
+  const totalTx = summaryData.reduce((s, r) => s + r.num_transactions, 0);
+
+  const totalPages = Math.max(1, Math.ceil(transactionsData.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
-  const paginated = data.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  const paginatedTransactions = transactionsData.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300">
@@ -122,34 +180,49 @@ export default function TransparenciaPage() {
           </p>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Total Ingresos</p>
-            <div className="flex items-center gap-2">
-              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
-              <p className="text-lg font-semibold text-emerald-300/80">{formatBs(totalIncomeBs)}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-8 shrink-0 text-xs font-medium text-slate-500">Bs</span>
+              <p className="min-w-0 flex-1 break-words text-base sm:text-lg font-semibold text-emerald-300/80">{formatBs(totalIncomeBs)}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">USD</span>
-              <p className="text-xl font-bold text-emerald-400">{formatUSD(totalIncomeUSD)}</p>
+              <p className="min-w-0 flex-1 break-words text-lg sm:text-xl font-bold text-emerald-400">{formatUSD(totalIncomeUSD)}</p>
             </div>
           </div>
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Total Egresos</p>
-            <div className="flex items-center gap-2">
-              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
-              <p className="text-lg font-semibold text-red-300/80">{formatBs(totalExpenseBs)}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-8 shrink-0 text-xs font-medium text-slate-500">Bs</span>
+              <p className="min-w-0 flex-1 break-words text-base sm:text-lg font-semibold text-red-300/80">{formatBs(totalExpenseBs)}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">USD</span>
-              <p className="text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
+              <p className="min-w-0 flex-1 break-words text-lg sm:text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
+            </div>
+          </div>
+          <div className="card-glass p-5 space-y-2">
+            <p className="text-sm text-slate-400">Balance</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-8 shrink-0 text-xs font-medium text-slate-500">Bs</span>
+              <p className={`text-lg lg:text-base font-semibold ${balanceBs >= 0 ? 'text-blue-300/80' : 'text-red-300/80'}`}>
+                {formatBs(balanceBs)}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">USD</span>
+              <p className={`text-xl font-bold ${balanceUSD >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                {formatUSD(balanceUSD)}
+              </p>
             </div>
           </div>
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Transacciones</p>
             <div className="flex items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">#</span>
-              <p className="text-xl font-bold text-blue-400">{totalTx}</p>
+              <p className="min-w-0 flex-1 break-words text-lg sm:text-xl font-bold text-blue-400">{totalTx}</p>
             </div>
           </div>
         </div>
@@ -197,6 +270,7 @@ export default function TransparenciaPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-left">
+                  <th className="px-4 py-3 text-slate-400 font-medium">Fecha</th>
                   <th className="px-4 py-3 text-slate-400 font-medium">Tipo</th>
                   <th className="px-4 py-3 text-slate-400 font-medium">Categoría</th>
                   <th className="px-4 py-3 text-slate-400 font-medium text-right">Bs</th>
@@ -204,21 +278,22 @@ export default function TransparenciaPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {loadingTransactions ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                      Cargando datos...
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                      Cargando transacciones...
                     </td>
                   </tr>
-                ) : data.length === 0 ? (
+                ) : transactionsData.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                      Sin datos disponibles
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                      Sin transacciones disponibles
                     </td>
                   </tr>
                 ) : (
-                  paginated.map((row, i) => (
-                    <tr key={`${row.type}-${row.category}-${row.currency_primary}-${i}`} className="border-b border-white/5 hover:bg-white/5">
+                  paginatedTransactions.map((row, i) => (
+                    <tr key={`${row.type}-${row.category}-${row.transaction_date}-${i}`} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="px-4 py-3 text-slate-300">{row.transaction_date}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
@@ -234,10 +309,10 @@ export default function TransparenciaPage() {
                       </td>
                       <td className="px-4 py-3 text-slate-300">{row.category}</td>
                       <td className="px-4 py-3 text-right font-mono text-slate-400">
-                        {formatBs(row.total_bs)}
+                        {formatBs(row.amount_bs)}
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-slate-300">
-                        {formatUSD(row.total_usd)}
+                        {formatUSD(row.amount_usd)}
                       </td>
                     </tr>
                   ))
@@ -246,7 +321,7 @@ export default function TransparenciaPage() {
             </table>
           </div>
 
-          {!loading && totalPages > 1 && (
+          {!loadingTransactions && transactionsData.length > 0 && totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5">
               <p className="text-xs text-slate-500">
                 Página {safePage} de {totalPages}

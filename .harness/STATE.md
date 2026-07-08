@@ -1,12 +1,12 @@
 **STATE — Finty**
 
-**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 4/5 / DEC-014/DEC-015)
-Última sesión: 2026-07-07
-Commit: 01570d6 (rama agentpc-dev)
+**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 7 / DEC-017)
+Última sesión: 2026-07-08
+Commit: 3be5bb0 (rama agentpc-dev)
 Salud: 🟢 verde
-Próxima acción: Corregir DEC-015 (footer único fijo, filtro funcional en Dashboard, texto en cintillo móvil) en agentpc-dev. NO mergear aún; esperar revisión de preview.
-Bloqueos activos: ninguno
-Nota: PR #4 abierto pero sin mergear. DEC-014 implementado; DEC-015 abre ajustes post-preview. No avanzar a Etapa 5 hasta cerrar feedback y gate de aprobación humana.
+Próxima acción: Merge de agentpc-dev a main tras gate humano (PR #5 ya abierto para DEC-016; DEC-017 va en el mismo o nuevo PR). Luego Etapa 5 (PWA) con aprobación.
+Bloqueos activos: ninguno (BLK-003 resuelto por Qwen).
+Nota: PR #5 (DEC-016) abierto sin mergear. DEC-017 implementado en agentpc-dev (Qwen): tabla /transparencia pagina el 100% de transacciones vía /api/public/transactions; cards Bs móvil sin desborde. No avanzar a Etapa 5 hasta gate humano.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
 - Modelo de Balance — v5 es el definitivo. No revertir a v6.
