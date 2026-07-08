@@ -21,3 +21,28 @@ Sesión de cierre de Etapa 4 con 2 rondas de feedback del usuario sobre preview 
 
 ## Siguiente
 - Etapa 5: PWA offline (Serwist + IndexedDB), tras gate humano.
+
+# 2026-07-08 (parte 2) — Arranque Etapa 0 (Harness de Tests, DEC-018)
+
+## Resumen
+Tras cerrar Etapa 4, el usuario aprobó arrancar Etapa 0 migrando de Vitest a Jest.
+
+## Eventos
+- **DEC-018 registrado:** arranque de Etapa 0 con Jest. Limpieza de Vitest + andamiaje Jest.
+- **BLK-001 resuelto:** la decisión DEC-010/DEC-018 descarta Vitest (tipos Vite rotos en Windows) y migra a Jest.
+- **Qwen delegado para DEC-018:** fallo 1 por error de ruta en comando de Hermes (exit 128, no de Qwen); relanzado.
+- **Qwen fallo 2:** `API Error: 400 property 'enable_thinking' is unsupported` (exit 1). Qwen dejó parcial (borró vitest.config.ts, quitó vitest de package.json, creó jest.config.ts) pero no commiteó ni verificó. BLK-004 registrado.
+- **Hermes terminó DEC-018 directo:** corrigió jest.config.ts a config limpia con @swc/jest (sin next-jest, que no existe como paquete en Next 16), creó src/lib/utils/currency.test.ts (4 tests).
+- **Verificación Hermes:** `npm test` 4/4 pasan; `npm run build` verde. BLK-004 cerrado.
+- **PR #6 abierto:** feat Etapa 0 Jest (DEC-018), pendiente de merge/gate humano.
+
+## Métricas
+- PRs hoy: #5 (Etapa 4, mergeado), #6 (Etapa 0 Jest, abierto).
+- Agentes: Qoder (Etapa 4), Qwen (DEC-017 OK; DEC-018 falló por API → Hermes terminó).
+- Bloqueos: BLK-001 resuelto (Jest), BLK-004 abierto y resuelto (Qwen API error; Hermes completó).
+
+## Siguiente
+- Merge de PR #6 tras gate humano.
+- Ampliar suite de tests (criterio de aceptación Etapa 0: ≥1 test en CI/CD).
+- Etapa 5: PWA offline, tras gate.
+

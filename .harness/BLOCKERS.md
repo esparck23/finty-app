@@ -1,13 +1,12 @@
 **BLOCKERS — Finty**
 
-**BLK-001 — Vitest no resuelve tipos de Vite en Windows**
-Fecha: 2026-07-07
+**BLK-001 — Vitest no resuelve tipos de Vite en Windows (RESUELTO por migración a Jest)
+Fecha: 2026-07-07 | Resuelto: 2026-07-08 (DEC-018)
 Bloquea: Etapa 0 — Harness de Tests
-Síntoma: `vitest.config.ts` y tipos de `node_modules/vitest` reportan `TS2307 Cannot find module 'vite' / '@vitest/utils/display'`, aunque existen en disco.
-Causa probable: resolución de módulos TypeScript/Windows en este proyecto (`moduleResolution` no es `bundler/nodenext`), o dependencia transitiva de Vite faltante/rota tras instalación corrupta.
-Intento aplicado: reinstalación limpia de `node_modules`, `package-lock.json`, cache npm, y creación de `vitest.config.ts`.
-Regla de reintento: máx 3 intentos por problema antes de dejar bloqueado.
-Siguiente acción sugerida: cambiar `moduleResolution` a `bundler` en `tsconfig.json` o, si persiste, cambiar estrategia a Jest.
+Síntoma original: `vitest.config.ts` y tipos de `node_modules/vitest` reportan `TS2307 Cannot find module 'vite' / '@vitest/utils/display'`, aunque existen en disco.
+Causa probable: resolución de módulos TypeScript/Windows (`moduleResolution` no es `bundler/nodenext`), o dependencia transitiva de Vite faltante/rota.
+Intento aplicado: reinstalación limpia de `node_modules`, `package-lock.json`, cache npm, y creación de `vitest.config.ts`. Persistió.
+Resolución: DEC-010 + DEC-018 descartan Vitest en este proyecto Windows y migran la Etapa 0 a **Jest** (sin depender del pipeline Vite/rolldown). Qwen ejecuta la limpieza de Vitest y el andamiaje de Jest (DEC-018).
 
 **BLK-002 — No se pudo appendar DEC-016 en DECISIONS.md vía patch (texto duplicado)
 Fecha: 2026-07-07
@@ -36,8 +35,13 @@ Reintentos restantes: 1 de 3 (2 fallidos: timeout + rate limit). NO reintentar h
 Estado del trabajo parcial (sin commitear, conservado en agentpc-dev): src/app/transparencia/page.tsx (TxRow tipado, incompleto) + src/app/api/public/transactions/route.ts (nuevo, sin probar). No se pierde.
 Siguiente acción sugerida (reintento 3, post-reset): tras 2026-07-18 16:40, relanzar Qoder con el mismo prompt acotado de reintento 2. Mientras tanto, opción alterna: Hermes podría implementar DEC-017 directamente (sin Qoder) si el usuario lo prefiere para no esperar al reset.
 
-**BLK-003 (actualización 2026-07-08, RESUELTO por Qwen)**
-Qwen Code CLI (v0.19.7) completó DEC-017 exitosamente (session proc_cec89d94d9dd, exit 0). Commit 3be5bb0 en agentpc-dev: paginación de tabla /transparencia conectada a /api/public/transactions (recorre las 27 transacciones, no solo 10) + cards Bs en móvil sin desborde. Build verde verificado por Hermes. BLK-003 cerrado. Nota: Qoder siguió en rate limit (reset 2026-07-18) pero la vía alterna (Qwen) resolvió el bloqueo sin esperar.
+**BLK-004 — Qwen API error al arrancar DEC-018 (enable_thinking)
+Fecha: 2026-07-08
+Bloquea: delegación a Qwen para DEC-018 (Etapa 0 Jest).
+Síntoma: `qwen --yolo` exit 1 con `API Error: 400 [400]: property 'enable_thinking' is unsupported`. Qwen avanzó parcialmente antes de fallar (eliminó vitest.config.ts, quitó vitest de package.json, creó jest.config.ts), pero no commiteó ni verificó.
+Causa: la cuenta/modelo de Qwen usada no soporta el parámetro `enable_thinking` que inyecta la CLI. Error de API del proveedor, no del proyecto.
+Resolución: Hermes terminó DEC-018 directamente (sin Qwen). Se corrigió jest.config.ts a config limpia con @swc/jest (sin next-jest, que no existe como paquete en Next 16), se creó src/lib/utils/currency.test.ts (4 tests), npm test pasa (4/4) y npm run build verde. BLK-004 cerrado; DEC-018 completada por Hermes.
+
 
 
 

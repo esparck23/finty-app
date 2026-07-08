@@ -131,6 +131,19 @@ Fecha: 2026-07-07
 Decisión: Seguir trabajando en agentpc-dev (NO mergear aún). Corregir 2 detalles detectados en preview de Vercel tras DEC-016.
 Razón: Prueba en preview no conforme.
 Contexto/Feedback (para Qoder):
-1. PAGINACIÓN de la TABLA en /transparencia: la tabla solo muestra 10 items (registros) mientras la card de total dice #27 Transacciones. Debe implementarse la paginación en la TABLA de /transparencia que refleje el 100% de las transacciones. PROBAR que el total de transacciones efectivamente se esté paginando después de los 10 items (mismo modelo de Transacciones/Categorías: slice por página + controles Anterior/Siguiente + "Página X de Y"). Nota: DEC-013 p5 ya añadió paginación, pero el usuario reporta que la tabla sigue cortada en 10 — verificar si la paginación está aplicada a la tabla o solo al estado, y corregir para que todas las transacciones sean navegables.
-2. CARDS en móvil: el texto (números) en Bolívares (Bs) sobrepasa el tamaño de la card en móvil y rompe el UX. Corregir para que el valor en Bs no desborde la card (ej. reducir font-size en móvil, permitir wrap/truncar con ellipsis, o apilar USD/Bs en columna en lugar de fila cuando no haya espacio). No romper el UX en móvil.
-Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional: paginación recorre todas las transacciones; cards Bs no desbordan en móvil) ANTES de commitear. No commitear sin verificación.
+1. PAGINACIÓN de la TABLA en /transparencia: la tabla solo muestra 10 items (registros) mientras la card de total dice #27 Transacciones. Debe implementarse la paginación en la TABLA de /transparencia que refleje el 100% de las transacciones. PROBAR que el total de transacciones efectivamente se esté paginando después de los 10 items.
+2. CARDS en móvil: el texto (números) en Bolívares (Bs) sobrepasa el tamaño de la card en móvil y rompe el UX. Corregir para que el valor en Bs no desborde en móvil.
+Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional) ANTES de commitear. No commitear sin verificación.
+
+**DEC-018 — Arranque Etapa 0 (Harness de Tests) con Jest
+Fecha: 2026-07-08
+Decisión: Iniciar Etapa 0 migrando de Vitest a Jest. Qwen limpia todo lo relativo a Vitest y prepara el andamiaje de tests con Jest.
+Razón: BLK-001 (Vitest no resuelve tipos de Vite en Windows) no se resolvió tras reinstalación limpia; DEC-010 ya descartó Vitest en este proyecto. Jest funciona bien en Windows sin depender del pipeline de Vite/rolldown.
+Contexto/Feedback (para Qwen):
+- ELIMINAR todo rastro de Vitest: desinstalar `vitest` (y `@vitest/*`, `vitest.config.ts` si existe), quitar scripts de `package.json` que invoquen vitest, y remover cualquier config/tsconfig que lo referencie.
+- PREPARAR Jest para Next.js 16 + TypeScript: instalar `jest`, `ts-jest` (o `@swc/jest`), `@types/jest`, `jest-environment-jsdom` (para componentes React) y `babel`/preset si aplica. Configurar `jest.config.ts` (o `jest.config.js`) con `testEnvironment: 'jsdom'`, transform de TS, y `moduleNameMapper` para alias `@/` → `src/`.
+- Añadir script `npm test` en `package.json` (ej. `jest`).
+- Crear 1 test de ejemplo mínimo y EJECUTABLE que pase (puede ser unitario puro, sin DB, ej. util de formato en `src/lib/utils/currency.ts` o un smoke test de componente).
+- VERIFICAR: `npm test` corre y pasa; `npm run build` sigue verde; no romper código existente.
+- REGLA: no tocar la sección "No tocar" de STATE.md (trg_audit_delete, modelo Balance v5, receipt_url, middleware.ts). Rama `agentpc-dev`, sin force push, commits pequeños.
+- NO mergear a main aún; entregar en agentpc-dev para revisión humana.

@@ -1,14 +1,14 @@
 **STAGES — Finty**
 
 **Etapa 0 — Harness de Tests
-Estado: 🔴 NO INICIADA
+Estado: 🟡 EN CURSO (arrancada 2026-07-08, DEC-018)
 Gate: requiere aprobación humana para arrancar
 Criterios de aceptación:
- Setup de framework de tests (Vitest recomendado para Next.js)
+ Setup de framework de tests (Vitest recomendado → migrado a Jest por BLK-001/DEC-010/DEC-018)
  Al menos 1 test de ejemplo ejecutándose en CI/CD
  Script npm test funcional en package.json
  No romper código existente
- 
+Notas: Vitest descartado (tipos Vite rotos en Windows). Jest configurado con @swc/jest + jsdom + alias @/. Test de ejemplo currency.test.ts (4 tests) pasa. Build verde. PR #6 abierto. Falta conectar a CI/CD.
 **Etapa 1 — Fundación
 Estado: ✅ COMPLETADA
 Fecha cierre: 2026-07-03
