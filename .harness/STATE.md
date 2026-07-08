@@ -1,11 +1,12 @@
 **STATE — Finty**
 
-**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia**
+**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 4/5 / DEC-014/DEC-015)
 Última sesión: 2026-07-07
-Commit main: 065daac
+Commit: 01570d6 (rama agentpc-dev)
 Salud: 🟢 verde
-Próxima acción: Etapa 5 — Modo Offline (PWA) con Serwist + IndexedDB
+Próxima acción: Corregir DEC-015 (footer único fijo, filtro funcional en Dashboard, texto en cintillo móvil) en agentpc-dev. NO mergear aún; esperar revisión de preview.
 Bloqueos activos: ninguno
+Nota: PR #4 abierto pero sin mergear. DEC-014 implementado; DEC-015 abre ajustes post-preview. No avanzar a Etapa 5 hasta cerrar feedback y gate de aprobación humana.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
 - Modelo de Balance — v5 es el definitivo. No revertir a v6.
