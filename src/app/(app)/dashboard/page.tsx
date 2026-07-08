@@ -173,9 +173,27 @@ export default function DashboardPage() {
   return (
     <div className="p-4 md:p-8 space-y-6 relative min-h-full">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400 text-sm">Resumen general</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+            <p className="text-slate-400 text-sm">Resumen general</p>
+          </div>
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/transparencia`;
+              navigator.clipboard.writeText(url).then(() => {
+                setShareCopied(true);
+                setTimeout(() => setShareCopied(false), 2000);
+              });
+            }}
+            className="ml-2 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-1.5 hover:bg-white/10 transition-colors cursor-pointer group shrink-0"
+            title="Copiar enlace público de Transparencia"
+          >
+            {shareCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} className="text-slate-400 group-hover:text-white" />}
+            <span className="text-xs text-slate-400 group-hover:text-white hidden sm:inline">
+              {shareCopied ? 'Copiado' : 'Compartir'}
+            </span>
+          </button>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           {(Object.keys(periodLabels) as PeriodKey[]).map((key) => (
@@ -320,23 +338,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-      <button
-        onClick={() => {
-          const url = `${window.location.origin}/transparencia`;
-          navigator.clipboard.writeText(url).then(() => {
-            setShareCopied(true);
-            setTimeout(() => setShareCopied(false), 2000);
-          });
-        }}
-        className="fixed bottom-8 left-4 md:left-8 card-glass px-3 py-2 flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer group"
-        title="Copiar enlace público de Transparencia"
-      >
-        {shareCopied ? <Check size={16} className="text-green-400" /> : <Copy size={16} className="text-slate-400 group-hover:text-white" />}
-        <span className="text-xs text-slate-400 group-hover:text-white">
-          {shareCopied ? 'Copiado' : 'Copiar enlace público de Transparencia'}
-        </span>
-      </button>
 
       <button
         onClick={() => router.push('/transactions?new=true')}
