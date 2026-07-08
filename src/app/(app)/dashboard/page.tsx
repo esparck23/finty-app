@@ -70,11 +70,11 @@ function getPeriodDates(period: PeriodKey): { from: string; to: string } {
 }
 
 const periodLabels: Record<PeriodKey, string> = {
-  all: 'Todo',
+  all: 'Todos',
   month: 'Este mes',
   '3months': '3 meses',
   year: 'Este año',
-  custom: 'Personalizado',
+  custom: 'Rango de fechas',
 };
 
 const MONTHS_ES = [

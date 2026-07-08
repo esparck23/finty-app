@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { formatUSD, formatBs } from '@/lib/utils/currency';
 
 interface SummaryRow {
@@ -272,14 +271,6 @@ export default function TransparenciaPage() {
           )}
         </div>
 
-        <div className="mt-12 border-t border-white/5" />
-        <footer className="mt-6 mb-8 text-center text-xs text-slate-600">
-          <p>
-            <Link href="/login" className="text-blue-500 hover:text-blue-400">
-              Acceder al sistema
-            </Link>
-          </p>
-        </footer>
       </div>
     </div>
   );
