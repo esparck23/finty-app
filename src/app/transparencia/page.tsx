@@ -55,20 +55,35 @@ export default function TransparenciaPage() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
-            <p className="text-xs text-slate-500 mb-1">Total Ingresos</p>
-            <p className="text-xl font-bold text-green-400">{formatUSD(totalIncomeUSD)}</p>
-            <p className="text-xs text-slate-500">{formatBs(totalIncomeBs)}</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="card-glass p-5 space-y-2">
+            <p className="text-sm text-slate-400">Total Ingresos</p>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
+              <p className="text-lg font-semibold text-emerald-300/80">{formatBs(totalIncomeBs)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">USD</span>
+              <p className="text-xl font-bold text-emerald-400">{formatUSD(totalIncomeUSD)}</p>
+            </div>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
-            <p className="text-xs text-slate-500 mb-1">Total Egresos</p>
-            <p className="text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
-            <p className="text-xs text-slate-500">{formatBs(totalExpenseBs)}</p>
+          <div className="card-glass p-5 space-y-2">
+            <p className="text-sm text-slate-400">Total Egresos</p>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
+              <p className="text-lg font-semibold text-red-300/80">{formatBs(totalExpenseBs)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">USD</span>
+              <p className="text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
+            </div>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-5 text-center">
-            <p className="text-xs text-slate-500 mb-1">Transacciones</p>
-            <p className="text-xl font-bold text-blue-400">{totalTx}</p>
+          <div className="card-glass p-5 space-y-2">
+            <p className="text-sm text-slate-400">Transacciones</p>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">#</span>
+              <p className="text-xl font-bold text-blue-400">{totalTx}</p>
+            </div>
           </div>
         </div>
 
@@ -77,11 +92,11 @@ export default function TransparenciaPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-left">
+                  <th className="px-4 py-3 text-slate-400 font-medium text-right">#</th>
                   <th className="px-4 py-3 text-slate-400 font-medium">Tipo</th>
                   <th className="px-4 py-3 text-slate-400 font-medium">Categoría</th>
-                  <th className="px-4 py-3 text-slate-400 font-medium text-right">USD</th>
                   <th className="px-4 py-3 text-slate-400 font-medium text-right">Bs</th>
-                  <th className="px-4 py-3 text-slate-400 font-medium text-right">#</th>
+                  <th className="px-4 py-3 text-slate-400 font-medium text-right">USD</th>
                 </tr>
               </thead>
               <tbody>
@@ -100,6 +115,7 @@ export default function TransparenciaPage() {
                 ) : (
                   data.map((row, i) => (
                     <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="px-4 py-3 text-right text-slate-400">{row.num_transactions}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`text-xs px-2 py-0.5 rounded ${
@@ -114,13 +130,12 @@ export default function TransparenciaPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-300">{row.category}</td>
-                      <td className="px-4 py-3 text-right font-mono text-slate-300">
-                        {formatUSD(row.total_usd)}
-                      </td>
                       <td className="px-4 py-3 text-right font-mono text-slate-400">
                         {formatBs(row.total_bs)}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-400">{row.num_transactions}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-300">
+                        {formatUSD(row.total_usd)}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -130,8 +145,7 @@ export default function TransparenciaPage() {
         </div>
 
         <footer className="mt-8 text-center text-xs text-slate-600">
-          <p>Datos extraídos directamente de la base de datos Finty.</p>
-          <p className="mt-1">
+          <p>
             <Link href="/login" className="text-blue-500 hover:text-blue-400">
               Acceder al sistema
             </Link>
