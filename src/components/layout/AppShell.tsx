@@ -33,10 +33,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto">
           {children}
-          <div className="mt-12 border-t border-white/5" />
-          <footer className="py-4 mb-4 text-center text-xs text-slate-600">
-            <p>Finty &mdash; Gestión de Fondos Humanitarios</p>
-          </footer>
         </main>
       </div>
 

@@ -190,25 +190,31 @@ export default function DashboardPage() {
             title="Copiar enlace público de Transparencia"
           >
             {shareCopied ? <Check size={14} className="text-green-400" /> : <Copy size={14} className="text-slate-400 group-hover:text-white" />}
-            <span className="text-xs text-slate-400 group-hover:text-white hidden sm:inline">
-              {shareCopied ? 'Copiado' : 'Compartir'}
+            <span className="text-xs text-slate-400 group-hover:text-white">
+              {shareCopied ? 'Copiado' : (
+                <>
+                  <span className="hidden sm:inline">Compartir</span>
+                  <span className="sm:hidden">Compartir enlace público</span>
+                </>
+              )}
             </span>
           </button>
         </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          {(Object.keys(periodLabels) as PeriodKey[]).map((key) => (
-            <button
-              key={key}
-              onClick={() => setPeriod(key)}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                period === key
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-              }`}
+        <div className="flex flex-wrap gap-3 items-center">
+          <div>
+            <label className="text-xs text-slate-500 block mb-1.5">Filtrar por periodo:</label>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as PeriodKey)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white w-full sm:w-auto"
             >
-              {periodLabels[key]}
-            </button>
-          ))}
+              {(Object.keys(periodLabels) as PeriodKey[]).map((key) => (
+                <option key={key} value={key}>
+                  {periodLabels[key]}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
 
