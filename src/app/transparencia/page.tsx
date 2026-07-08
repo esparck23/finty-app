@@ -94,18 +94,41 @@ export default function TransparenciaPage() {
     fetchData();
   }, [fetchData]);
 
-  const totalIncomeUSD = data
+  const incomeUSD = data
     .filter((r) => r.type === 'income')
     .reduce((s, r) => s + r.total_usd, 0);
-  const totalExpenseUSD = data
-    .filter((r) => r.type === 'expense')
-    .reduce((s, r) => s + r.total_usd, 0);
-  const totalIncomeBs = data
+  const incomeBs = data
     .filter((r) => r.type === 'income')
     .reduce((s, r) => s + r.total_bs, 0);
-  const totalExpenseBs = data
+
+  const expenseUSD = data
+    .filter((r) => r.type === 'expense')
+    .reduce((s, r) => s + r.total_usd, 0);
+  const expenseBs = data
     .filter((r) => r.type === 'expense')
     .reduce((s, r) => s + r.total_bs, 0);
+
+  const exchangeInUSD = data
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'Bs')
+    .reduce((s, r) => s + r.total_usd, 0);
+  const exchangeOutUSD = data
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'USD')
+    .reduce((s, r) => s + r.total_usd, 0);
+  const exchangeInBs = data
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'USD')
+    .reduce((s, r) => s + r.total_bs, 0);
+  const exchangeOutBs = data
+    .filter((r) => r.type === 'exchange' && r.currency_primary === 'Bs')
+    .reduce((s, r) => s + r.total_bs, 0);
+
+  const totalIncomeUSD = incomeUSD + exchangeInUSD;
+  const totalExpenseUSD = expenseUSD + exchangeOutUSD;
+  const totalIncomeBs = incomeBs + exchangeInBs;
+  const totalExpenseBs = expenseBs + exchangeOutBs;
+
+  const balanceUSD = totalIncomeUSD - totalExpenseUSD;
+  const balanceBs = totalIncomeBs - totalExpenseBs;
+
   const totalTx = data.reduce((s, r) => s + r.num_transactions, 0);
 
   const totalPages = Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE));
@@ -122,7 +145,7 @@ export default function TransparenciaPage() {
           </p>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <div className="card-glass p-5 space-y-2">
             <p className="text-sm text-slate-400">Total Ingresos</p>
             <div className="flex items-center gap-2">
@@ -143,6 +166,21 @@ export default function TransparenciaPage() {
             <div className="flex items-center gap-2">
               <span className="w-8 text-xs font-medium text-slate-500">USD</span>
               <p className="text-xl font-bold text-red-400">{formatUSD(totalExpenseUSD)}</p>
+            </div>
+          </div>
+          <div className="card-glass p-5 space-y-2">
+            <p className="text-sm text-slate-400">Balance</p>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
+              <p className={`text-lg font-semibold ${balanceBs >= 0 ? 'text-blue-300/80' : 'text-red-300/80'}`}>
+                {formatBs(balanceBs)}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-8 text-xs font-medium text-slate-500">USD</span>
+              <p className={`text-xl font-bold ${balanceUSD >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                {formatUSD(balanceUSD)}
+              </p>
             </div>
           </div>
           <div className="card-glass p-5 space-y-2">
