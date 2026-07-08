@@ -1,11 +1,12 @@
 **STATE — Finty**
 
-**Etapa actual: 5/7 — Modo Offline (PWA)
+**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 3 / DEC-013)
 Última sesión: 2026-07-07
-Commit: (ver git log)
+Commit: a8452f4 (rama agentpc-dev)
 Salud: 🟢 verde
-Próxima acción: Iniciar Etapa 5 — PWA offline con Service Worker
+Próxima acción: Merge de agentpc-dev a main tras gate humano; luego Etapa 5 (PWA) con aprobación.
 Bloqueos activos: ninguno
+Nota: STAGES.md marca Etapa 4 COMPLETADA; STATE mantiene 4 reabierta por feedback pendiente (DEC-008/009/012/013). No avanzar a Etapa 5 hasta gate de aprobación humana (ver STAGES Etapa 4 gate).
 No tocar:
 trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE va desde código.
 Modelo de Balance — v5 es el definitivo. No revertir a v6.
