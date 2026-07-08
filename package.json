@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:init": "node scripts/db-init.mjs",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "jest"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -25,20 +24,19 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@swc/jest": "^0.2.39",
     "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
-    "jsdom": "^29.1.1",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "sqlite": "^5.1.1",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "vitest": "^4.1.10"
+    "typescript": "^5"
   }
 }
