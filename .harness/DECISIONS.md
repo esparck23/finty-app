@@ -36,13 +36,13 @@ Decisión: Imagen transitoria, no se persiste en R2 ni otro storage
 Razón: Elimina dependencia S3, 5 env vars, vulnerabilidad SSRF, y un salto de red
 Contexto: receipt_url existe en schema pero sin poblar. Decisión futura.
 
-**DEC-007 — Cotizave como fuente primaria de tasas**
+**DEC-007 — Cotizave como fuente primaria de tasas
 Fecha: 2026-07-04
 Decisión: Cotizave (BCV USD, BCV EUR, Binance P2P) con dolar-bcv-api como fallback
 Razón: Documentación profesional, status page, plan free generoso (1,500 req/mes), sin JWT
 Contexto: exchange_rates migrado a UNIQUE(date, source). Lazy fetch en TransactionForm.
 
-**DEC-008 — Reapertura Etapa 4 (feedback)**
+**DEC-008 — Reapertura Etapa 4 (feedback)
 Fecha: 2026-07-07
 Decisión: Reabrir Etapa 4 para ajustes de dashboard/transparencia sin avanzar de etapa.
 Razón: Prueba de funcionalidad no conforme.
@@ -52,25 +52,25 @@ Contexto/Feedback:
 - Cards Ingresos/Egresos/Balance deben mostrar valores en USD y Bolívares.
 - Transparencia: debe haber link/pestaña accesible desde navegación y un espacio de "share" en el Dashboard para compartir el acceso público a Transparencia.
 
-**DEC-009 — Dashboard: una sola card Balance**
+**DEC-009 — Dashboard: una sola card Balance
 Fecha: 2026-07-07
 Decisión: Eliminar otras cards del Dashboard; dejar solo la card Balance.
 Razón: Feedback: las cards añadidas en Dashboard no van.
 Contexto: La card Balance del Dashboard debe ser exactamente la misma que Transacciones: mismo diseño, mismo patrón, mismo origen de datos.
 
-**DEC-010 — Excepción instalación Vitest/rolldown en Windows**
+**DEC-010 — Excepción instalación Vitest/rolldown en Windows
 Fecha: 2026-07-07
 Decisión: Reinstalar dependencias desde cero por fallo de native binding de rolldown, luego cambiar estrategia de tests a Jest.
 Razón: `npx vitest` falló con `ERR_DLOPEN_FAILED` en `@rolldown/binding-win32-x64-msvc/rolldown-binding.win32-x64-msvc.node` y, tras reinstalación, persiste `TS2307` por resolución de tipos de `vite` en Windows. No es fallo de proyecto ni de código; es entorno/stack de pruebas.
 Contexto/Remediación: Se eliminaron `node_modules` y `package-lock.json`, se limpió cache npm y se reinstaló. Se descarta continuar con Vitest para Etapa 0. Cuando Jest aplique y compile/ejecute, limpiar BLK-001 de `BLOCKERS.md`.
 
-**DEC-011 — Fiabilidad de Vibe en Etapa 0**
+**DEC-011 — Fiabilidad de Vibe en Etapa 0
 Fecha: 2026-07-07
 Decisión: Marcar a Vibe como no productivo en tareas de setup largo para Etapa 0 en este proyecto; priorizar ejecución directa o Qoder para este tipo de trabajo.
 Razón: Vibe no cerró Etapa 0 dentro de 8 y 20 turnos seguidos, repitiendo planning sin entrega. En Etapa 4 con Qoder sí hubo commits concretos.
 Contexto: No se descarta Vibe para otras etapas. Revisar en DECISIONS.md en otro momento.
 
-**DEC-012 — Reapertura Etapa 4 (feedback 2)**
+**DEC-012 — Reapertura Etapa 4 (feedback 2)
 Fecha: 2026-07-07
 Decisión: Reabrir Etapa 4 para ajustes visuales/funcionales de Dashboard y Transparencia.
 Razón: Prueba de funcionalidad no conforme.
@@ -97,7 +97,7 @@ Nota de alcance: los puntos 1-5 son los ejecutables ahora. El punto 6 queda regi
 **DEC-014 — Reapertura Etapa 4 (feedback 4, alcance global + navegación)
 Fecha: 2026-07-07
 Decisión: Reabrir Etapa 4 para corregir alcance de cambios de DEC-013 y comportamiento de navegación en /transparencia.
-Razón: Los cambios de DEC-013 se aplicaron con alcance incorrecto (solo en /transparencia) y falta distinguish visitante externo vs usuario del sistema.
+Razón: Los cambios de DEC-013 se aplicaron con alcance incorrecto (solo en /transparencia) y falta distinguir visitante externo vs usuario del sistema.
 Contexto/Feedback (punto a punto, para Qoder):
 1. El FOOTER (separador) aplicado en DEC-013 p3 solo está en /transparencia. Debe aplicarse a TODA la aplicación (layout global), no solo a esa página.
 2. El SELECT de filtros/rango (DEC-013 p2) se aplicó a /transparencia pero NO al /dashboard, donde es donde realmente se necesita. El dashboard debe tener el mismo control de periodo (Todos / Este mes / 3 meses / Este año / Rango de fechas) que alimente sus gráficos y stats.
@@ -112,5 +112,16 @@ Razón: Prueba en preview no conforme tras DEC-014.
 Contexto/Feedback (punto a punto, para Qoder):
 1. Hay DOS footer visibles (se duplicaron: uno en layout raíz y otro en AppShell, o layout + página). Dejar UNO SOLO y que sea el FIJO (persistente en pantalla, no solo al final del scroll). Eliminar el duplicado.
 2. La funcionalidad de FILTRO implementada en /transparencia (select unificado Todos / Este mes / 3 meses / Este año / Rango de fechas que recarga datos vía API con from/to) debe implementarse IGUAL en /dashboard, alimentando sus gráficos y stats. No basta con alinear etiquetas (DEC-014 p2): el dashboard debe tener el mismo control funcional de periodo que /transparencia, no solo los botones previos.
-3. Móviles: en el cintillo de compartir URL de transparencia, no basta con el ícono de copiar; debe haber un TÍTULO o TEXTO indicativo (ej. "Compartir enlace público") visible también en móvil, no solo el icono.
+3. Móviles: en el cintillo de compartir URL de transparencia, no basta con el ícono de copiar; debe haber un TÍTULO o TEXTO indicativo (ej. "Compartir enlace público") visible también en móvil, no solo el ícono.
 Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional) ANTES de hacer cualquier commit. No commitear sin verificación.
+
+**DEC-016 — Corrección de punto de verdad en /transparencia (feedback 6)
+Fecha: 2026-07-07
+Decisión: Reabrir Etapa 4 para corregir que las cards de /transparencia no reflejan los cálculos correctamente.
+Razón: Las cards de /transparencia deben ser un espejo fiel de los datos reales; al ser "transparencia", ambos (Transacciones y Transparencia) deben reflejar un MISMO punto de verdad.
+Contexto/Feedback (para Qoder):
+- Las cards de Totales (Ingresos / Egresos / Balance / Transacciones) en /transparencia NO coinciden con los cálculos reales de la página de Transacciones.
+- Acción: COMPARAR los cálculos de /transparencia contra los de Transacciones (misma fuente/lógica de agregación). Ambos deben dar el mismo resultado (mismo punto de verdad).
+- Investigar de dónde vienen los números de cada uno: /transparencia usa /api/public/summary (vista public_summary o consulta agregada) y Transacciones usa el listado real de transacciones. Si difieren por la consulta SQL, el modelo de agregación, el filtro de moneda, o el tratamiento de direction-split (Balance v5: entregado→Egreso, recibido→Ingreso), corregir para que coincidan.
+- Regla universal del proyecto: Balance = Total Ingreso - Total Egreso (modelo v5, no revertir a v6).
+Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional comparando ambas páginas) ANTES de commitear. No commitear sin verificación.
