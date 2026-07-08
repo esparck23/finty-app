@@ -2,11 +2,11 @@
 
 **Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 6 / DEC-016)
 Última sesión: 2026-07-07
-Commit: d96e52b (main)
+Commit: 6a3798a (rama agentpc-dev)
 Salud: 🟢 verde
-Próxima acción: Corregir DEC-016 (cards /transparencia deben coincidir con cálculos de Transacciones) en agentpc-dev; merge tras gate humano.
-Bloqueos activos: ninguno
-Nota: PR #4 (DEC-014/015) mergeado a main. DEC-016 abre corrección de punto de verdad en /transparencia. No avanzar a Etapa 5 hasta cerrar y gate humano.
+Próxima acción: Merge de agentpc-dev a main tras gate humano (PR pendiente); luego Etapa 5 (PWA) con aprobación.
+Bloqueos activos: BLK-002 (registro resuelto: DEC-016 escrito vía write_file tras fallo de patch por texto duplicado; no bloquea ejecución).
+Nota: PR #4 (DEC-014/015) mergeado a main. DEC-016 implementado en agentpc-dev (cards /transparencia ahora aplican split v5 de exchange, igual que Transacciones). No avanzar a Etapa 5 hasta gate de aprobación humana.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
 - Modelo de Balance — v5 es el definitivo. No revertir a v6.
