@@ -12,6 +12,15 @@ interface SummaryRow {
   num_transactions: number;
 }
 
+interface TxRow {
+  type: string;
+  category: string;
+  currency_primary: string;
+  amount_usd: number;
+  amount_bs: number;
+  transaction_date: string;
+}
+
 type FilterKey = 'all' | 'month' | '3months' | 'year' | 'custom';
 
 const filterLabels: Record<FilterKey, string> = {
