@@ -125,3 +125,12 @@ Contexto/Feedback (para Qoder):
 - Investigar de dónde vienen los números de cada uno: /transparencia usa /api/public/summary (vista public_summary o consulta agregada) y Transacciones usa el listado real de transacciones. Si difieren por la consulta SQL, el modelo de agregación, el filtro de moneda, o el tratamiento de direction-split (Balance v5: entregado→Egreso, recibido→Ingreso), corregir para que coincidan.
 - Regla universal del proyecto: Balance = Total Ingreso - Total Egreso (modelo v5, no revertir a v6).
 Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional comparando ambas páginas) ANTES de commitear. No commitear sin verificación.
+
+**DEC-017 — Ajustes post-preview DEC-016 (feedback 7)
+Fecha: 2026-07-07
+Decisión: Seguir trabajando en agentpc-dev (NO mergear aún). Corregir 2 detalles detectados en preview de Vercel tras DEC-016.
+Razón: Prueba en preview no conforme.
+Contexto/Feedback (para Qoder):
+1. PAGINACIÓN de la TABLA en /transparencia: la tabla solo muestra 10 items (registros) mientras la card de total dice #27 Transacciones. Debe implementarse la paginación en la TABLA de /transparencia que refleje el 100% de las transacciones. PROBAR que el total de transacciones efectivamente se esté paginando después de los 10 items (mismo modelo de Transacciones/Categorías: slice por página + controles Anterior/Siguiente + "Página X de Y"). Nota: DEC-013 p5 ya añadió paginación, pero el usuario reporta que la tabla sigue cortada en 10 — verificar si la paginación está aplicada a la tabla o solo al estado, y corregir para que todas las transacciones sean navegables.
+2. CARDS en móvil: el texto (números) en Bolívares (Bs) sobrepasa el tamaño de la card en móvil y rompe el UX. Corregir para que el valor en Bs no desborde la card (ej. reducir font-size en móvil, permitir wrap/truncar con ellipsis, o apilar USD/Bs en columna en lugar de fila cuando no haya espacio). No romper el UX en móvil.
+Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional: paginación recorre todas las transacciones; cards Bs no desbordan en móvil) ANTES de commitear. No commitear sin verificación.
