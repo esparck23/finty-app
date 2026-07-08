@@ -36,4 +36,9 @@ Reintentos restantes: 1 de 3 (2 fallidos: timeout + rate limit). NO reintentar h
 Estado del trabajo parcial (sin commitear, conservado en agentpc-dev): src/app/transparencia/page.tsx (TxRow tipado, incompleto) + src/app/api/public/transactions/route.ts (nuevo, sin probar). No se pierde.
 Siguiente acción sugerida (reintento 3, post-reset): tras 2026-07-18 16:40, relanzar Qoder con el mismo prompt acotado de reintento 2. Mientras tanto, opción alterna: Hermes podría implementar DEC-017 directamente (sin Qoder) si el usuario lo prefiere para no esperar al reset.
 
+**BLK-003 (actualización 2026-07-08, RESUELTO por Qwen)**
+Qwen Code CLI (v0.19.7) completó DEC-017 exitosamente (session proc_cec89d94d9dd, exit 0). Commit 3be5bb0 en agentpc-dev: paginación de tabla /transparencia conectada a /api/public/transactions (recorre las 27 transacciones, no solo 10) + cards Bs en móvil sin desborde. Build verde verificado por Hermes. BLK-003 cerrado. Nota: Qoder siguió en rate limit (reset 2026-07-18) pero la vía alterna (Qwen) resolvió el bloqueo sin esperar.
+
+
+
 
