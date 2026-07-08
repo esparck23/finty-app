@@ -57,3 +57,15 @@ Fecha: 2026-07-07
 Decisión: Eliminar otras cards del Dashboard; dejar solo la card Balance.
 Razón: Feedback: las cards añadidas en Dashboard no van.
 Contexto: La card Balance del Dashboard debe ser exactamente la misma que Transacciones: mismo diseño, mismo patrón, mismo origen de datos.
+
+**DEC-010 — Excepción instalación Vitest/rolldown en Windows**
+Fecha: 2026-07-07
+Decisión: Reinstalar dependencias desde cero por fallo de native binding de rolldown, luego cambiar estrategia de tests a Jest.
+Razón: `npx vitest` falló con `ERR_DLOPEN_FAILED` en `@rolldown/binding-win32-x64-msvc/rolldown-binding.win32-x64-msvc.node` y, tras reinstalación, persiste `TS2307` por resolución de tipos de `vite` en Windows. No es fallo de proyecto ni de código; es entorno/stack de pruebas.
+Contexto/Remediación: Se eliminaron `node_modules` y `package-lock.json`, se limpió cache npm y se reinstaló. Se descarta continuar con Vitest para Etapa 0. Cuando Jest aplique y compile/ejecute, limpiar BLK-001 de `BLOCKERS.md`.
+
+**DEC-011 — Fiabilidad de Vibe en Etapa 0**
+Fecha: 2026-07-07
+Decisión: Marcar a Vibe como no productivo en tareas de setup largo para Etapa 0 en este proyecto; priorizar ejecución directa o Qoder para este tipo de trabajo.
+Razón: Vibe no cerró Etapa 0 dentro de 8 y 20 turnos seguidos, repitiendo planning sin entrega. En Etapa 4 con Qoder sí hubo commits concretos.
+Contexto: No se descarta Vibe para otras etapas. Revisar en DECISIONS.md en otro momento.
