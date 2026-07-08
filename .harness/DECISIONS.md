@@ -93,3 +93,14 @@ Contexto/Feedback (punto a punto, uno a uno, para Qoder):
 5. Añadir PAGINACIÓN al listado de transparencia, con el MISMO modelo ya aplicado a Transacciones y Categorías.
 6. (ANOTADO APARTE — NO implementar en esta etapa) Buscador inteligente + botón exportar PDF en Transparencia. Referenciado por el usuario como "punto 9". Diferido a Etapa 6 (Reportes) según DEC-012 p4. No bloquear Etapa 4 por esto.
 Nota de alcance: los puntos 1-5 son los ejecutables ahora. El punto 6 queda registrado pero fuera de alcance hasta Etapa 6.
+
+**DEC-014 — Reapertura Etapa 4 (feedback 4, alcance global + navegación)
+Fecha: 2026-07-07
+Decisión: Reabrir Etapa 4 para corregir alcance de cambios de DEC-013 y comportamiento de navegación en /transparencia.
+Razón: Los cambios de DEC-013 se aplicaron con alcance incorrecto (solo en /transparencia) y falta distinguish visitante externo vs usuario del sistema.
+Contexto/Feedback (punto a punto, para Qoder):
+1. El FOOTER (separador) aplicado en DEC-013 p3 solo está en /transparencia. Debe aplicarse a TODA la aplicación (layout global), no solo a esa página.
+2. El SELECT de filtros/rango (DEC-013 p2) se aplicó a /transparencia pero NO al /dashboard, donde es donde realmente se necesita. El dashboard debe tener el mismo control de periodo (Todos / Este mes / 3 meses / Este año / Rango de fechas) que alimente sus gráficos y stats.
+3. /transparencia es un enlace público, pero la app debe reconocer cuándo el visitante viene DEL SISTEMA (sesión autenticada) vs externo (anónimo). Si viene del sistema, seguir mostrando el panel de navegación lateral (Sidebar) en /transparencia; si es externo, mantener la vista pública sin sidebar.
+Regla de ejecución obligatoria para Qoder: PROBAR (npm run build + revisión funcional) ANTES de hacer cualquier commit. No commitear sin verificación.
+Nota de alcance: no tocar la sección "No tocar" de STATE.md. Respetar rama feature/* (usar agentpc-dev existente).

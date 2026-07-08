@@ -1,11 +1,12 @@
 **STATE — Finty**
 
-**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia**
+**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 4 / DEC-014)
 Última sesión: 2026-07-07
 Commit main: 065daac
 Salud: 🟢 verde
-Próxima acción: Etapa 5 — Modo Offline (PWA) con Serwist + IndexedDB
+Próxima acción: Corregir DEC-014 (footer global, select en Dashboard, nav /transparencia autenticado) en agentpc-dev; merge tras gate humano.
 Bloqueos activos: ninguno
+Nota: reabierta tras merge de PR #3 (DEC-013). No avanzar a Etapa 5 hasta cerrar feedback 4 y gate de aprobación humana.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
 - Modelo de Balance — v5 es el definitivo. No revertir a v6.
