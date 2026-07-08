@@ -1,12 +1,12 @@
 **STATE — Finty**
 
-**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 4 / DEC-014)
+**Etapa actual: 4/7 — Dashboard Avanzado + Transparencia (REABIERTA por feedback 4/5 / DEC-014/DEC-015)
 Última sesión: 2026-07-07
-Commit: 77bfaa8 (rama agentpc-dev)
+Commit: 01570d6 (rama agentpc-dev)
 Salud: 🟢 verde
-Próxima acción: Merge de agentpc-dev a main tras gate humano (PR pendiente); luego Etapa 5 (PWA) con aprobación.
+Próxima acción: Corregir DEC-015 (footer único fijo, filtro funcional en Dashboard, texto en cintillo móvil) en agentpc-dev. NO mergear aún; esperar revisión de preview.
 Bloqueos activos: ninguno
-Nota: reabierta tras merge de PR #3 (DEC-013). DEC-014 implementado en agentpc-dev (footer global en layout, select Dashboard alineado, nav /transparencia condicional por auth). Punto 2 aclarado: Dashboard ya tenía control de periodo desde DEC-008/012; DEC-014 solo alineó etiquetas con /transparencia. No avanzar a Etapa 5 hasta gate de aprobación humana.
+Nota: PR #4 abierto pero sin mergear. DEC-014 implementado; DEC-015 abre ajustes post-preview. No avanzar a Etapa 5 hasta cerrar feedback y gate de aprobación humana.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
 - Modelo de Balance — v5 es el definitivo. No revertir a v6.
