@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Share2 } from 'lucide-react';
+import { Plus, Copy, Check } from 'lucide-react';
 import { formatUSD, formatBs } from '@/lib/utils/currency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -77,6 +77,17 @@ const periodLabels: Record<PeriodKey, string> = {
   custom: 'Personalizado',
 };
 
+const MONTHS_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+function formatMonthES(ym: string): string {
+  const [y, m] = ym.split('-');
+  if (!y || !m) return ym;
+  return `${MONTHS_ES[parseInt(m, 10) - 1]} ${y}`;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [monthly, setMonthly] = useState<MonthlyData[]>([]);
@@ -128,8 +139,8 @@ export default function DashboardPage() {
   const fmt = chartCurrency === 'USD' ? formatUSD : formatBs;
   const currencyLabel = chartCurrency === 'USD' ? 'USD' : 'Bs';
 
-  const chartData = monthly.reduce<Record<string, { month: string; income: number; expense: number }>>((acc, row) => {
-    if (!acc[row.month]) acc[row.month] = { month: row.month, income: 0, expense: 0 };
+  const chartData = monthly.reduce<Record<string, { month: string; monthLabel: string; income: number; expense: number }>>((acc, row) => {
+    if (!acc[row.month]) acc[row.month] = { month: row.month, monthLabel: formatMonthES(row.month), income: 0, expense: 0 };
     if (row.type === 'income') acc[row.month].income = row[amtKey];
     if (row.type === 'expense') acc[row.month].expense = row[amtKey];
     return acc;
@@ -167,20 +178,6 @@ export default function DashboardPage() {
           <p className="text-slate-400 text-sm">Resumen general</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <button
-            onClick={() => {
-              const url = `${window.location.origin}/transparencia`;
-              navigator.clipboard.writeText(url).then(() => {
-                setShareCopied(true);
-                setTimeout(() => setShareCopied(false), 2000);
-              });
-            }}
-            className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-1.5"
-            title="Copiar link público de Transparencia"
-          >
-            <Share2 size={14} />
-            {shareCopied ? 'Copiado' : 'Compartir'}
-          </button>
           {(Object.keys(periodLabels) as PeriodKey[]).map((key) => (
             <button
               key={key}
@@ -245,13 +242,15 @@ export default function DashboardPage() {
         Ver transacciones →
       </Link>
 
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-500">Moneda gráficos:</span>
-        {(['USD', 'Bs'] as const).map((cur) => (
+      <div className="border-t border-white/10" />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-sm text-slate-400">Gráficos según tipo de moneda:</span>
+        {(['Bs', 'USD'] as const).map((cur) => (
           <button
             key={cur}
             onClick={() => setChartCurrency(cur)}
-            className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+            className={`px-4 py-1.5 text-sm rounded-lg transition-colors ${
               chartCurrency === cur
                 ? 'bg-blue-600 text-white'
                 : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
@@ -273,7 +272,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={chartValues}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <XAxis dataKey="monthLabel" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
@@ -295,17 +294,17 @@ export default function DashboardPage() {
           ) : expenseCategories.length === 0 ? (
             <div className="h-64 flex items-center justify-center text-slate-500 text-sm">Sin gastos para este periodo</div>
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
                   data={expenseCategories}
                   cx="50%"
-                  cy="45%"
-                  innerRadius={50}
-                  outerRadius={90}
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={70}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: '#64748b' }}
+                  label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                  labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
                 >
                   {expenseCategories.map((_, index) => (
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
@@ -314,13 +313,30 @@ export default function DashboardPage() {
                 <Tooltip formatter={(value) => fmt(Number(value))} />
                 <Legend
                   verticalAlign="bottom"
-                  wrapperStyle={{ fontSize: 12 }}
+                  wrapperStyle={{ fontSize: 11 }}
                 />
               </PieChart>
             </ResponsiveContainer>
           )}
         </div>
       </div>
+
+      <button
+        onClick={() => {
+          const url = `${window.location.origin}/transparencia`;
+          navigator.clipboard.writeText(url).then(() => {
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 2000);
+          });
+        }}
+        className="fixed bottom-8 left-4 md:left-8 card-glass px-3 py-2 flex items-center gap-2 hover:bg-white/10 transition-colors cursor-pointer group"
+        title="Copiar enlace público de Transparencia"
+      >
+        {shareCopied ? <Check size={16} className="text-green-400" /> : <Copy size={16} className="text-slate-400 group-hover:text-white" />}
+        <span className="text-xs text-slate-400 group-hover:text-white">
+          {shareCopied ? 'Copiado' : 'Copiar enlace público de Transparencia'}
+        </span>
+      </button>
 
       <button
         onClick={() => router.push('/transactions?new=true')}
