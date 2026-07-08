@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Plus, Share2 } from 'lucide-react';
 import { formatUSD, formatBs } from '@/lib/utils/currency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -33,6 +33,10 @@ interface SummaryData {
   income?: { total_usd: number; total_bs: number };
   expense?: { total_usd: number; total_bs: number };
   exchange?: { total_usd: number; total_bs: number };
+}
+
+interface ExchangeByCurrency {
+  [key: string]: { total_usd: number; total_bs: number };
 }
 
 type PeriodKey = 'all' | 'month' | '3months' | 'year' | 'custom';
@@ -78,10 +82,13 @@ export default function DashboardPage() {
   const [monthly, setMonthly] = useState<MonthlyData[]>([]);
   const [byCategory, setByCategory] = useState<CategoryData[]>([]);
   const [summary, setSummary] = useState<SummaryData>({});
+  const [exchangeByCurrency, setExchangeByCurrency] = useState<ExchangeByCurrency>({});
   const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodKey>('all');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+  const [chartCurrency, setChartCurrency] = useState<'USD' | 'Bs'>('USD');
+  const [shareCopied, setShareCopied] = useState(false);
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
@@ -102,6 +109,7 @@ export default function DashboardPage() {
         setMonthly(json.monthly);
         setByCategory(json.byCategory);
         setSummary(json.summary);
+        setExchangeByCurrency(json.exchangeByCurrency ?? {});
       }
     } catch {
       // silently fail
@@ -114,24 +122,42 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchStats]);
 
+  const usdKey = 'total_usd' as const;
+  const bsKey = 'total_bs' as const;
+  const amtKey = chartCurrency === 'USD' ? usdKey : bsKey;
+  const fmt = chartCurrency === 'USD' ? formatUSD : formatBs;
+  const currencyLabel = chartCurrency === 'USD' ? 'USD' : 'Bs';
+
   const chartData = monthly.reduce<Record<string, { month: string; income: number; expense: number }>>((acc, row) => {
     if (!acc[row.month]) acc[row.month] = { month: row.month, income: 0, expense: 0 };
-    if (row.type === 'income') acc[row.month].income = row.total_usd;
-    if (row.type === 'expense') acc[row.month].expense = row.total_usd;
+    if (row.type === 'income') acc[row.month].income = row[amtKey];
+    if (row.type === 'expense') acc[row.month].expense = row[amtKey];
     return acc;
   }, {});
   const chartValues = Object.values(chartData);
 
   const expenseCategories = byCategory
     .filter((c) => c.type === 'expense')
-    .map((c) => ({ name: c.category, value: c.total_usd }));
+    .map((c) => ({ name: c.category, value: c[amtKey] }))
+    .filter((c) => c.value > 0);
 
   const incomeUSD = summary.income?.total_usd ?? 0;
   const expenseUSD = summary.expense?.total_usd ?? 0;
-  const balanceUSD = incomeUSD - expenseUSD;
   const incomeBs = summary.income?.total_bs ?? 0;
   const expenseBs = summary.expense?.total_bs ?? 0;
-  const balanceBs = incomeBs - expenseBs;
+
+  const exchangeOutUSD = exchangeByCurrency['USD']?.total_usd ?? 0;
+  const exchangeInBs = exchangeByCurrency['USD']?.total_bs ?? 0;
+  const exchangeInUSD = exchangeByCurrency['Bs']?.total_usd ?? 0;
+  const exchangeOutBs = exchangeByCurrency['Bs']?.total_bs ?? 0;
+
+  const totalIncomeUSD = incomeUSD + exchangeInUSD;
+  const totalExpenseUSD = expenseUSD + exchangeOutUSD;
+  const totalIncomeBs = incomeBs + exchangeInBs;
+  const totalExpenseBs = expenseBs + exchangeOutBs;
+
+  const balanceUSD = totalIncomeUSD - totalExpenseUSD;
+  const balanceBs = totalIncomeBs - totalExpenseBs;
 
   return (
     <div className="p-4 md:p-8 space-y-6 relative min-h-full">
@@ -140,7 +166,21 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           <p className="text-slate-400 text-sm">Resumen general</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/transparencia`;
+              navigator.clipboard.writeText(url).then(() => {
+                setShareCopied(true);
+                setTimeout(() => setShareCopied(false), 2000);
+              });
+            }}
+            className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-1.5"
+            title="Copiar link público de Transparencia"
+          >
+            <Share2 size={14} />
+            {shareCopied ? 'Copiado' : 'Compartir'}
+          </button>
           {(Object.keys(periodLabels) as PeriodKey[]).map((key) => (
             <button
               key={key}
@@ -180,32 +220,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card-glass p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={16} className="text-green-400" />
-            <span className="text-xs text-slate-400">Ingresos</span>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="card-glass p-5 space-y-2">
+          <p className="text-sm text-slate-400">Balance</p>
+          <div className="flex items-center gap-2">
+            <span className="w-8 text-xs font-medium text-slate-500">Bs</span>
+            <p className={`text-lg font-semibold ${balanceBs >= 0 ? 'text-blue-300/80' : 'text-red-300/80'}`}>
+              {formatBs(balanceBs)}
+            </p>
           </div>
-          <p className="text-lg font-semibold text-green-400">{formatUSD(incomeUSD)}</p>
-          <p className="text-xs text-slate-500">{formatBs(incomeBs)}</p>
-        </div>
-        <div className="card-glass p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingDown size={16} className="text-red-400" />
-            <span className="text-xs text-slate-400">Egresos</span>
+          <div className="flex items-center gap-2">
+            <span className="w-8 text-xs font-medium text-slate-500">USD</span>
+            <p className={`text-xl font-bold ${balanceUSD >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+              {formatUSD(balanceUSD)}
+            </p>
           </div>
-          <p className="text-lg font-semibold text-red-400">{formatUSD(expenseUSD)}</p>
-          <p className="text-xs text-slate-500">{formatBs(expenseBs)}</p>
-        </div>
-        <div className="card-glass p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet size={16} className="text-blue-400" />
-            <span className="text-xs text-slate-400">Balance</span>
-          </div>
-          <p className={`text-lg font-semibold ${balanceUSD >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-            {formatUSD(balanceUSD)}
-          </p>
-          <p className="text-xs text-slate-500">{formatBs(balanceBs)}</p>
         </div>
       </div>
 
@@ -216,9 +245,26 @@ export default function DashboardPage() {
         Ver transacciones →
       </Link>
 
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-slate-500">Moneda gráficos:</span>
+        {(['USD', 'Bs'] as const).map((cur) => (
+          <button
+            key={cur}
+            onClick={() => setChartCurrency(cur)}
+            className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+              chartCurrency === cur
+                ? 'bg-blue-600 text-white'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            {cur}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card-glass p-5">
-          <h2 className="text-sm font-medium text-slate-300 mb-4">Ingresos vs Egresos (USD)</h2>
+          <h2 className="text-sm font-medium text-slate-300 mb-4">Ingresos vs Egresos ({currencyLabel})</h2>
           {isLoading ? (
             <div className="h-64 flex items-center justify-center text-slate-500 text-sm">Cargando...</div>
           ) : chartValues.length === 0 ? (
@@ -232,7 +278,7 @@ export default function DashboardPage() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
                   labelStyle={{ color: '#e2e8f0' }}
-                  formatter={(value) => formatUSD(Number(value))}
+                  formatter={(value) => fmt(Number(value))}
                 />
                 <Legend />
                 <Bar dataKey="income" name="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -243,7 +289,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="card-glass p-5">
-          <h2 className="text-sm font-medium text-slate-300 mb-4">Gastos por categoría (USD)</h2>
+          <h2 className="text-sm font-medium text-slate-300 mb-4">Gastos por categoría ({currencyLabel})</h2>
           {isLoading ? (
             <div className="h-64 flex items-center justify-center text-slate-500 text-sm">Cargando...</div>
           ) : expenseCategories.length === 0 ? (
@@ -265,7 +311,7 @@ export default function DashboardPage() {
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatUSD(Number(value))} />
+                <Tooltip formatter={(value) => fmt(Number(value))} />
                 <Legend
                   verticalAlign="bottom"
                   wrapperStyle={{ fontSize: 12 }}

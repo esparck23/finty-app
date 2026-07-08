@@ -63,6 +63,17 @@ export async function GET(request: NextRequest) {
       args: [user.id, ...dateArgs],
     });
 
+    const exchangeSplitResult = await db.execute({
+      sql: `SELECT
+              currency_primary,
+              SUM(amount_usd) AS total_usd,
+              SUM(amount_bs) AS total_bs
+            FROM transactions
+            WHERE user_id = ? AND type = 'exchange' ${dateWhere}
+            GROUP BY currency_primary`,
+      args: [user.id, ...dateArgs],
+    });
+
     const monthly = monthlyResult.rows.map((r) => ({
       month: r.month as string,
       type: r.type as string,
@@ -85,7 +96,15 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json({ monthly, byCategory, summary });
+    const exchangeByCurrency: Record<string, { total_usd: number; total_bs: number }> = {};
+    for (const row of exchangeSplitResult.rows) {
+      exchangeByCurrency[row.currency_primary as string] = {
+        total_usd: Number(row.total_usd),
+        total_bs: Number(row.total_bs),
+      };
+    }
+
+    return NextResponse.json({ monthly, byCategory, summary, exchangeByCurrency });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
