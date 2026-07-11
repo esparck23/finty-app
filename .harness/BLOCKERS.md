@@ -120,14 +120,165 @@ Route (app)
 {"type":"agent_start"}
 {"type":"turn_start"}
 {"type":"message_start","message":{"role":"user","content":[{"type":"text","text":"Fix the project in C:\\Users\\Agent\\dev\\finty-app so black --check and pytest pass. Error context:"}],"timestamp":1783727694512}}
-{"type":"message_end","message":{"role":"user","content":[{"type":"text","text":"Fix 
+{"type":"message_end","message":{"role":"user","content":[{"type":"text","text":"Fix"}]
 
-**BLK-006 — Motor corta por "3 intentos" aunque la última pasada sea verde (falso positivo de "detenido")**
-Fecha: 2026-07-10
-Bloquea: interpretación de resultado del motor A2A Factory (reporte al usuario).
-Síntoma: en el run de Etapa 5.1, el log finalizó "HERMES CRITICAL finty-app detenido tras 3 intentos" y el JOURNAL/STATE registraron éxito (5.1 COMPLETADO, build verde verificado por Hermes con `npm.cmd run build` rc 0). Las 2 primeras pasadas del quality gate fallaron mientras Qwen/Vibe escribían el código; Pi reparó y la 3.a pasada quedó verde, pero el motor contó los intentos previos y cortó igual.
-Causa: `workflow.py` cuenta intentos de quality gate de forma acumulativa y detiene el pipeline al llegar a 3, sin revisar si el estado final en disco es verde. No distingue "falló y se reparó" de "falló y no se reparó".
-Impacto: confunde al operador (reporte de fallo vs éxito real en disco). El código de 5.1 quedó correcto.
-Siguiente acción sugerida (para la otra sesión): en `workflow.py`, tras el último intento de Pi, re-ejecutar el quality gate UNA vez más y usar ESE resultado como veredicto final; o bien, no incrementar retry_count si la pasada anterior fue verde. No relanzar el motor solo por este reporte (el código ya está bien).
-Regla: fallo de LÓGICA del motor (agente-side), no del proyecto. Registrado, espera gate humano.
+**BLK-006 — Quality gate marca FAILED si hay stdout, aunque los comandos pasen (rc 0)**
+Fecha: 2026-07-10 (abierto) / 2026-07-11 (causa raíz real + resuelto)
+Bloquea: interpretación de resultado del motor A2A Factory.
+Síntoma: en runs 5.1 y 5.2 el log decía "quality gate final fallido / detenido", pero en disco `npm test` y `npm run build` pasaban (rc 0). El motor cortaba injustamente.
+CAUSA RAÍZ REAL: `nodes.py` `run_quality_gate` acumulaba `proc.stdout.strip()` de cada comando exitoso en `logs`, y luego `diagnostics = "\n".join(logs); if diagnostics: quality_gate_passed=False`. Como `npm test`/`build` exitosos emiten salida (ej. "Tests: 17 passed"), `diagnostics` nunca estaba vacío → el gate decía FAILED aunque TODO pasó (rc 0).
+RESOLUCIÓN: el veredicto ahora se basa en `returncode` (acumulador `failed`); la salida stdout de comandos exitosos se registra como info ("OK"), no como fallo. Verificado: sobre el estado actual de finty (5.2 verde en disco) el gate retorna `quality_gate_passed=True`, `retry_count` intacto.
+Estado: RESUELTO en motor (nodes.py). Nota: el intento previo de "repair_loops + pasada final" en workflow.py NO arreglaba esto; el bug estaba en nodes.py.
+Regla: fallo de LÓGICA del motor, corregido por Hermes.
+
+
+### 2026-07-11 13:24:39 — Quality Gate fallido en pasada final
+- Error: > finty-app@0.1.0 test
+> jest
+> finty-app@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.10 (webpack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+✓ Compiled successfully in 9.1s
+  Running TypeScript ...
+  Finished TypeScript in 15.0s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/16) ...
+  Generating static pages using 1 worker (4/16) 
+  Generating static pages using 1 worker (8/16) 
+  Generating static pages using 1 worker (12/16) 
+✓ Generating static pages using 1 worker (16/16) in 1943ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/categories
+├ ƒ /api/categories/[id]
+├ ƒ /api/dashboard/stats
+├ ƒ /api/exchange-rates
+├ ƒ /api/exchange-rates/bcv
+├ ƒ /api/public/rates
+├ ƒ /api/public/summary
+├ ƒ /api/public/transactions
+├ ƒ /api/scan
+├ ƒ /api/transactions
+├ ƒ /api/transactions/[id]
+├ ○ /categories
+├ ○ /dashboard
+├ ○ /login
+├ ○ /transactions
+└ ƒ /transparencia
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+- Logs: > finty-app@0.1.0 test
+> jest
+> finty-app@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.10 (webpack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+✓ Compiled successfully in 9.1s
+  Running TypeScript ...
+  Finished TypeScript in 15.0s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/1
+
+**BLK-007 — Etapa 5.2 no entregada: _load_prompt descartaba el bloque del sub-paso**
+Fecha: 2026-07-11
+Bloquea: avance de Etapa 5.2 (IndexedDB offline queue) vía motor.
+Síntoma original: run del motor abortó por quality gate fallido; `src/lib/offline/db.ts` NO existía tras el run.
+CAUSA RAÍZ REAL (corregida): `workflow.py` `_load_prompt` extraía SOLO la primera línea del sub-paso activo (`sm.group(1).strip().splitlines()[0][:300]`). Para 5.2 eso daba "5.2 — IndexedDB offline queue" sin contexto de modelo ni funciones a exportar → Qwen no sabía qué hacer y no entregaba `db.ts`. No era fallo de Qwen, era que el motor le pasaba un prompt vacío de instrucciones.
+RESOLUCIÓN: `_load_prompt` ahora busca el bloque completo del sub-paso (ej. "5.2 — ..." + líneas indentadas) en la sección de sub-pasos de STAGES.md y lo pasa como Alcance. Verificado: prompt de 5.2 ahora tiene 1111 chars con contexto de modelo, funciones y criterio.
+Estado: RESUELTO en motor (workflow.py). Re-run de 5.2 pendiente de validación.
+Regla: fallo agente-side (motor), corregido por Hermes.
+
+
+### 2026-07-11 13:58:32 — Quality Gate fallido en pasada final
+- Error: > finty-app@0.1.0 test
+> jest
+> finty-app@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.10 (webpack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+✓ Compiled successfully in 9.2s
+  Running TypeScript ...
+  Finished TypeScript in 15.0s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/16) ...
+  Generating static pages using 1 worker (4/16) 
+  Generating static pages using 1 worker (8/16) 
+  Generating static pages using 1 worker (12/16) 
+✓ Generating static pages using 1 worker (16/16) in 1944ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/categories
+├ ƒ /api/categories/[id]
+├ ƒ /api/dashboard/stats
+├ ƒ /api/exchange-rates
+├ ƒ /api/exchange-rates/bcv
+├ ƒ /api/public/rates
+├ ƒ /api/public/summary
+├ ƒ /api/public/transactions
+├ ƒ /api/scan
+├ ƒ /api/transactions
+├ ƒ /api/transactions/[id]
+├ ○ /categories
+├ ○ /dashboard
+├ ○ /login
+├ ○ /transactions
+└ ƒ /transparencia
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+- Logs: > finty-app@0.1.0 test
+> jest
+> finty-app@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.10 (webpack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+✓ Compiled successfully in 9.2s
+  Running TypeScript ...
+  Finished TypeScript in 15.0s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/1
 
