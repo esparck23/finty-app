@@ -1,8 +1,9 @@
 **STAGES — Finty**
 
 **Etapa 0 — Harness de Tests
-Estado: 🟡 EN CURSO (arrancada 2026-07-08, DEC-018)
-Gate: requiere aprobación humana para arrancar
+Estado: ✅ COMPLETADA
+Fecha cierre: 2026-07-08
+Commit: agentpc-dev (DEC-018)
 Criterios de aceptación:
  Setup de framework de tests (Vitest recomendado → migrado a Jest por BLK-001/DEC-010/DEC-018)
  Al menos 1 test de ejemplo ejecutándose en CI/CD
@@ -85,15 +86,38 @@ Criterios de aceptación:
  Filtros por periodo en dashboard (todo, mes, 3 meses, año, personalizado)
 Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboard con BarChart (ingresos vs egresos) y PieChart (gastos por categoría).
 
-**Etapa 5 — Modo Offline (PWA
-Estado: ⬜ NO INICIADA
-Dependencias: Etapa 4 completa
-Criterios de aceptación:
- Service Worker (Serwist) interceptando /api/categories y /api/transactions
- IndexedDB para transacciones creadas offline
- Background sync al recuperar conexión con is_offline_sync = 1
- App instalable (manifest.json + iconos)
- Verificación en Chrome DevTools → Application → Cache Storage.
+ 
+ **Etapa 5 — Modo Offline (PWA)
+ Estado: 🔄 EN PROGRESO
+ Dependencias: Etapa 4 completa
+ Sub-paso activo: 5.2 — IndexedDB offline queue
+ 	Sub-pasos (ejecutar UNO a la vez como criterio de aceptación, cada uno es un scope acotado):
+
+5.1 — Service Worker base (Serwist) (✅ COMPLETADO - 2026-07-10)
+  Archivo: src/app/sw.ts + sw.ts config
+  Scope: registrar SW que intercepte SOLO GET /api/categories y /api/transactions
+  Criterio medible: `npm run build` verde; `npx tsc --noEmit` 0 errores; SW presente en build output.
+  NO tocar: otras rutas API, proxy.ts, middleware.
+
+5.2 — IndexedDB offline queue
+  Archivo: src/lib/offline/db.ts
+  Scope: store transacciones creadas offline con flag is_offline_sync=0
+  Criterio medible: test unitario (Jest) que inserta y lee un registro offline; build verde.
+
+5.3 — Background sync
+  Archivo: src/app/sw.ts (extiende 5.1)
+  Scope: al recuperar conexión, enviar cola offline y marcar is_offline_sync=1
+  Criterio medible: test que simula online→offline→online y verifica flag=1; build verde.
+
+5.4 — Manifest + iconos (instalable)
+  Archivo: public/manifest.json + public/icons/*
+  Scope: manifest con name, icons 192/512, theme_color; link en layout
+  Criterio medible: Chrome DevTools → Application → Manifest válido; Lighthouse PWA installable.
+
+5.5 — Verificación Cache Storage
+  Scope: comprobar en Chrome DevTools → Application → Cache Storage que /api/categories y /api/transactions quedan cacheados
+  Criterio medible: checklist manual firmado en JOURNAL; build verde.
+
  
 **Etapa 6 — Automatización de Reportes
 Estado: ⬜ NO INICIADA
