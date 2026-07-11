@@ -4,8 +4,10 @@
 Última sesión: 2026-07-08
 Commit: <pendiente de merge a main> (rama agentpc-dev)
 Salud: 🟢 verde
-Próxima acción: Merge de agentpc-dev a main tras gate humano (PR por abrir). Luego ampliar suite de tests (criterios de aceptación de Etapa 0: ≥1 test en CI/CD, script npm test funcional — ya cumplido).
-Bloqueos: BLK-001 resuelto (Jest). BLK-004 resuelto (Qwen API error; Hermes terminó DEC-018).
+
+Próxima acción: 5.2 — IndexedDB offline queue
+  
+Bloqueos: BLK-004 resuelto (Qwen API error; Hermes terminó DEC-018).
 Cierre Etapa 4: COMPLETADA y mergeada (PR #3, #4, #5). Feedback 1-7 atendidos.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
