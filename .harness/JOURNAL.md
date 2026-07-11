@@ -115,3 +115,76 @@ A pedido del usuario, se validó el bloque 5.1 (Service Worker base Serwist) inv
 - Etapa 5.2 — IndexedDB offline queue (src/lib/offline/db.ts).
 
 
+
+### 2026-07-11 — Resolución BLK-006 (motor A2A Factory)
+
+- Responsable: Hermes
+- Problema: el motor cortaba con "Quality Gate fallido tras 3 intentos" aunque la última pasada del gate era verde.
+- Causa: `workflow.py` usaba `retry_count` acumulado como gatillo de aborto, sin miar el veredicto final real en disco.
+- Solución: cambiar el ciclo a `repair_loops` y agregar una pasada final de `node_hermes_compiler`; sol write blockers solo si ESA pasada falla.
+
+### 2026-07-11 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa (motor ya con BLK-006 resuelto: repair_loops + pasada final node_hermes_compiler).
+- Control de calidad: Fallado (quality gate final fallido tras 3 intentos de Pi).
+
+# 2026-07-11 (parte 2) — RUN motor 5.2 FALLIDO (Qwen no entregó db.ts) — GATE HUMANO
+
+## Resumen
+Run real del motor para Etapa 5.2 (IndexedDB offline queue, DEC-019). Pipeline Qwen→Vibe→Pi(x3) abortó por quality gate fallido. Verificado por Hermes en disco: **el archivo `src/lib/offline/db.ts` NO existe** tras el run; el working tree solo tiene cambios en `.harness/` y `public/sw.js`.
+
+## Eventos
+- workflow.py leyó scope de `Próxima acción: 5.2` (regex dual + merge STATE OK).
+- Qwen/Vibe invocados para crear `src/lib/offline/db.ts` (store IndexedDB + flag `is_offline_sync=0`) + test Jest.
+- Quality gate falló en las 3 pasadas (attempt 1/3, 2/3, 3/3). BLK-006 ya resuelto (el motor hizo pasada final y escribió blocker solo porque falló de verdad).
+- Tras el run, en disco: `db.ts` ausente, `npm test` → **rc 0, 14 tests pasados** (solo sw.test.ts + currency.test.ts; NO hay test de 5.2). Build verde.
+- Conclusión: el agente de codear (Qwen) NO entregó el archivo `db.ts` ni su test; el gate falló porque el test de 5.2 que Qwen intentó no existía/compilaba, y Pi no logró materializarlo en 3 intentos.
+
+## Causa raíz
+- Fallo de CODER (agente-side Qwen/Vibe), NO de infraestructura (BLK-005 resuelto) ni de lógica (BLK-006 resuelto).
+- Hipótesis: el prompt acotado de 5.2 (`_load_prompt`) entregó el objetivo pero quizá sin el contexto suficiente de la estructura de `src/lib/` ni del modelo de transacción, o Qwen agotó `max-tool-calls=40` antes de escribir el archivo. El build pasaba (por eso el log muestra compilación verde) pero el test de 5.2 nunca se materializó.
+
+## Métricas
+- Agentes: motor A2A Factory (Qwen/Vibe/Pi).
+- Bloqueos: BLK-005 ✅, BLK-006 ✅. Nuevo: **BLK-007 (5.2 no entregado por Qwen)** abierto, espera gate humano.
+- Impacto en código de Finty: 0 archivos de 5.2 creados. `db.ts` ausente.
+
+## Siguiente (GATE HUMANO)
+- NO reintentar el motor a ciegas (procedimiento agent-fallback).
+- Opciones para el usuario:
+  (a) Re-ejecutar 5.2 con prompt más explícito (indicar modelo de transacción existente, ruta `src/lib/offline/`, y que cree `db.ts` + `db.test.ts`).
+  (b) Que Pi (externo al motor) implemente 5.2 directamente (como se hizo con 5.1), ya probado y funcional.
+  (c) Otra indicación.
+
+### 2026-07-11 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa.
+- Control de calidad: Fallado.
+
+# 2026-07-11 (parte 3) — RUN motor 5.2 RE-EJECUTADO (opción a) — CÓDIGO VERDE, reporte del motor erróneo
+
+## Resumen
+Re-run de 5.2 tras enriquecer STAGES 5.2 y corregir `_load_prompt` (BLK-007: el motor pasaba solo la línea 1 del sub-paso). El código de 5.2 SÍ se entregó y está verde en disco; pero el motor reportó "quality gate final fallido" por BLK-006 (bug aún vivo en nodes.py en ese momento).
+
+## Eventos
+- `_load_prompt` ahora entrega todo el bloque 5.2 (1111 chars: modelo Transaction, funciones a exportar, criterio de test).
+- Qwen/Vibe crearon `src/lib/offline/db.ts` (3182 b) + `src/lib/offline/db.test.ts` (4220 b).
+- Motor reportó fallo en intentos 1/3, 2/3, 3/3 + pasada final → "detenido: quality gate final fallido".
+- VERIFICACIÓN EN DISCO (por Hermes, post-run):
+  - `npm test` → rc 0, **17 tests pasados** (3 suites: db.test.ts + sw.test.ts + currency.test.ts).
+  - `npm run build` → rc 0 (verde).
+  - db.ts/db.test.ts presentes y funcionales.
+- Conclusión: el código de 5.2 está CORRECTO y verificado. El "fallo" del motor fue un FALSO NEGATIVO por BLK-006 (run_quality_gate marcaba FAILED si había stdout, aunque rc=0).
+
+## Causa raíz corregida (post-run)
+- BLK-006: `nodes.py` `run_quality_gate` usaba `diagnostics = "\n".join(logs); if diagnostics: FAILED`. Como npm test/build exitosos emiten salida, diagnostics nunca vacío → FAILED injusto.
+- FIX aplicado por Hermes: veredicto por `returncode` (acumulador `failed`); stdout de éxito = info "OK". Verificado: run_quality_gate sobre el estado actual retorna `quality_gate_passed=True`.
+- BLK-007: `_load_prompt` descartaba el bloque del sub-paso → corregido para extraer el bloque completo. RESUELTO.
+
+## Métricas
+- Agentes: motor A2A Factory (Qwen/Vibe/Pi).
+- Bloqueos: BLK-005 ✅, BLK-006 ✅ (resuelto hoy), BLK-007 ✅ (resuelto hoy).
+- Impacto en código: +2 archivos (db.ts, db.test.ts), 3 tests nuevos (total 17).
+
+## Siguiente (GATE HUMANO)
+- 5.2 COMPLETADO en disco y verde. Pendiente: commit en agentpc-dev + PR a main.
+- El motor NO escribió STATE/JOURNAL al abortar; Hermes registra manualmente esta parte 3.
+- Recomendado: re-run final del motor para que escriba STATE(5.3) limpio, O commit directo de lo ya verificado.

@@ -147,3 +147,9 @@ Contexto/Feedback (para Qwen):
 - VERIFICAR: `npm test` corre y pasa; `npm run build` sigue verde; no romper código existente.
 - REGLA: no tocar la sección "No tocar" de STATE.md (trg_audit_delete, modelo Balance v5, receipt_url, middleware.ts). Rama `agentpc-dev`, sin force push, commits pequeños.
 - NO mergear a main aún; entregar en agentpc-dev para revisión humana.
+
+## DEC-019 (2026-07-11) — Etapa 5.2 IndexedDB offline queue
+- Alcance: `src/lib/offline/db.ts` — store IndexedDB de transacciones creadas offline con flag `is_offline_sync=0`.
+- Criterio de aceptación: test Jest que inserta y lee un registro offline; `npm run build` verde; `npx tsc --noEmit` 0 errores.
+- No tocar: rutas API, proxy.ts, middleware, ni el SW de 5.1.
+- Orquestación: motor A2A Factory (Qwen→Vibe→Pi si falla). Hermes registra y espera gate humano para commit.

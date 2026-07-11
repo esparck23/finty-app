@@ -101,8 +101,10 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
 
 5.2 — IndexedDB offline queue
   Archivo: src/lib/offline/db.ts
-  Scope: store transacciones creadas offline con flag is_offline_sync=0
-  Criterio medible: test unitario (Jest) que inserta y lee un registro offline; build verde.
+  Contexto de modelo: el tipo Transaction ya existe en src/types/transaction.ts (interfaz Transaction con campo `is_offline_sync: boolean` en linea 51, mas campos type/amount_usd/amount_bs/currency_primary/category_id/description/transaction_date/etc). Usar ese tipo o su subset.
+  Scope: crear store IndexedDB (usando `idb` si esta en deps, o `indexeddb` nativo) en src/lib/offline/db.ts que persista transacciones creadas offline con `is_offline_sync` en false (equivalente a 0). Exportar funciones: `saveOfflineTransaction(tx)`, `getOfflineTransactions()`, `markSynced(id)`.
+  Criterio medible: test unitario (Jest, archivo src/lib/offline/db.test.ts) que inserta y lee un registro offline y verifica is_offline_sync=false; `npm run build` verde; `npx tsc --noEmit` 0 errores.
+  NO tocar: rutas API, proxy.ts, middleware, ni el SW de 5.1 (src/app/sw.ts).
 
 5.3 — Background sync
   Archivo: src/app/sw.ts (extiende 5.1)
