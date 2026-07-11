@@ -1,29 +1,30 @@
 **STATE — Finty**
 
-**Etapa actual: 0/7 — Harness de Tests (PREPARACIÓN COMPLETADA, pendiente merge)
-Última sesión: 2026-07-08
-Commit: <pendiente de merge a main> (rama agentpc-dev)
+**Etapa actual: 5/7 — Modo Offline (PWA) — EN PROGRESO**
+Última sesión: 2026-07-10
+Commit: agentpc-dev (SW base completada)
 Salud: 🟢 verde
-Próxima acción: Merge de agentpc-dev a main tras gate humano (PR por abrir). Luego ampliar suite de tests (criterios de aceptación de Etapa 0: ≥1 test en CI/CD, script npm test funcional — ya cumplido).
-Bloqueos: BLK-001 resuelto (Jest). BLK-004 resuelto (Qwen API error; Hermes terminó DEC-018).
+
+Próxima acción: 5.2 — IndexedDB offline queue
+  a. Archivo: src/lib/offline/db.ts
+  b. Scope: store transacciones creadas offline con flag is_offline_sync=0
+  c. Criterio medible: test unitario (Jest) que inserta y lee un registro offline; build verde.
+  
+Bloqueos: BLK-001 resuelto (Jest). BLK-003 resuelto (Qwen completó DEC-017). BLK-004 resuelto (Qwen API error; Hermes terminó DEC-018).
 Cierre Etapa 4: COMPLETADA y mergeada (PR #3, #4, #5). Feedback 1-7 atendidos.
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
 - Modelo de Balance — v5 es el definitivo. No revertir a v6.
 - receipt_url — existe en schema pero sin poblar. No construir UI hasta decidir almacenamiento.
-- middleware.ts — Next.js 16 usa proxy.ts. No crear middleware.
 
 **Contexto rápido**
 Stack: Next.js 16 + TypeScript + TailwindCSS + Turso (SQLite) + Recharts 3.9.2 + Vercel
 Auth: Contraseña bcrypt → cookie HttpOnly 24h (sin JWT)
-IA: Gemini 2.5 Flash OCR directo (sin R2, sin gateway aún)
+IA: Gemini 2.5 Flash OCR directo (sin gateway aún)
 Tasas: Cotizave primario, dolar-bcv-api fallback
-Tests: Etapa 0 EN CURSO. Vitest descartado (BLK-001); Jest configurado por DEC-018 (Hermes terminó tras fallo de API de Qwen).
+Tests: Etapa 0 COMPLETADA.
 
 **Decisiones recientes**
-- DEC-008 a DEC-017: feedbacks 1-7 de Etapa 4
-- DEC-016: punto de verdad /transparencia = Transacciones (split v5)
-- DEC-017: paginación tabla al 100% + cards Bs móvil
 - DEC-018: arranque Etapa 0 con Jest (Vitest eliminado, jest.config.ts + currency.test.ts, npm test pasa 4/4)
 
 **Agentes coding utilizados**

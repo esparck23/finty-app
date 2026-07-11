@@ -43,6 +43,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# python (smoke test only)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
 # temp files
 c.txt
 *.log

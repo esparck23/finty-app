@@ -46,3 +46,88 @@ Resolución: Hermes terminó DEC-018 directamente (sin Qwen). Se corrigió jest.
 
 
 
+
+### 2026-07-10 18:56 — RUN motor A2A Factory DETENIDO (BLK-005, NO es fallo de Finty)
+- Síntoma: workflow.py terminó con "Quality Gate fallido tras 3 intentos" → pipeline detenido, sin escribir STATE.
+- Error crudo: `[WinError 2] El sistema no puede encontrar el archivo especificado` en los 3 intentos de quality gate.
+- CAUSA RAÍZ (verificada por Hermes): `nodes.py` invoca el quality gate con `subprocess.run(["npm","test"])` / `["npx","tsc","--noEmit"]` desde `py -3.13`. En Windows, `npm`/`npx` son `npm.cmd`/`npx.cmd`, no exe; `subprocess` no resuelve la extensión `.cmd` y lanza WinError 2. El gate NUNCA ejecutó las pruebas reales de Finty → falso negativo.
+- Impacto en código de Finty: NINGUNO. `git diff jest.config.ts src/lib/utils/currency.test.ts` está vacío; Qwen/Vibe no modificaron archivos de código (o sus salidas no tocaron esos paths). El único cambio en disco es el .harness (STATE/JOURNAL/BLOCKERS/STAGES) que el motor escribió/mergeó.
+- Los cambios en `.harness/` del run NO están commiteados (working tree sucio en agentpc-dev).
+- Siguiente acción sugerida (ABRIR GATE HUMANO): corregir `nodes.py` `run_quality_gate` para Windows — usar `npm.cmd`/`npx.cmd` explícitos o `shell=True`, o invocar vía `py -3.13` con `env["PATH"]` que incluya el directorio de `npm.cmd`. Re-testear con `py -3.13 -c "import subprocess; subprocess.run(['npm.cmd','--version'])"` antes de relanzar el motor. NO relanzar el motor hasta ese fix (reintentar da el mismo WinError 2).
+- Regla: esto es fallo de INFRAESTRUCTURA del motor (agente-side), no del proyecto. Registrado y en espera de decisión del usuario (procedimiento agent-fallback). No reintentar a ciegas.
+
+
+**BLK-005 — quality gate falla en Windows porque npm/npx no se resuelven sin .cmd**
+Fecha: 2026-07-09
+Bloquea: Ejecución del motor A2A Factory sobre finty-app en Windows.
+Síntoma: subprocess.run(["npm", ...]) desde py -3.13 retorna WinError 2 aunque npm esté instalado.
+Causa: En Windows, npm/npx son cmd/bat; sin PATHEXT/shell=True, subprocess con lista no resuelve la extensión.
+Resolución pendiente: Adaptar run_quality_gate a Opción C (shutil.which + EXTRA_PATHS) para resolver npm/npx real antes de ejecutar.
+
+### 2026-07-10 20:01:05 — Quality Gate fallido tras 3 intentos
+- Error: > finty-app@0.1.0 test
+> jest
+> finty-app@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.10 (webpack)
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ (serwist) Bundling the service worker script with the URL '/sw.js' and the scope '/'...
+✓ Compiled successfully in 10.2s
+  Running TypeScript ...
+  Finished TypeScript in 14.6s ...
+  Collecting page data using 1 worker ...
+  Generating static pages using 1 worker (0/16) ...
+  Generating static pages using 1 worker (4/16) 
+  Generating static pages using 1 worker (8/16) 
+  Generating static pages using 1 worker (12/16) 
+✓ Generating static pages using 1 worker (16/16) in 1910ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/categories
+├ ƒ /api/categories/[id]
+├ ƒ /api/dashboard/stats
+├ ƒ /api/exchange-rates
+├ ƒ /api/exchange-rates/bcv
+├ ƒ /api/public/rates
+├ ƒ /api/public/summary
+├ ƒ /api/public/transactions
+├ ƒ /api/scan
+├ ƒ /api/transactions
+├ ƒ /api/transactions/[id]
+├ ○ /categories
+├ ○ /dashboard
+├ ○ /login
+├ ○ /transactions
+└ ƒ /transparencia
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+- Logs: {"type":"session","version":3,"id":"019f4e74-a259-74c2-9e26-696a78fe9e66","timestamp":"2026-07-10T23:54:54.425Z","cwd":"C:\\Users\\Agent\\dev\\finty-app"}
+{"type":"agent_start"}
+{"type":"turn_start"}
+{"type":"message_start","message":{"role":"user","content":[{"type":"text","text":"Fix the project in C:\\Users\\Agent\\dev\\finty-app so black --check and pytest pass. Error context:"}],"timestamp":1783727694512}}
+{"type":"message_end","message":{"role":"user","content":[{"type":"text","text":"Fix 
+
+**BLK-006 — Motor corta por "3 intentos" aunque la última pasada sea verde (falso positivo de "detenido")**
+Fecha: 2026-07-10
+Bloquea: interpretación de resultado del motor A2A Factory (reporte al usuario).
+Síntoma: en el run de Etapa 5.1, el log finalizó "HERMES CRITICAL finty-app detenido tras 3 intentos" y el JOURNAL/STATE registraron éxito (5.1 COMPLETADO, build verde verificado por Hermes con `npm.cmd run build` rc 0). Las 2 primeras pasadas del quality gate fallaron mientras Qwen/Vibe escribían el código; Pi reparó y la 3.a pasada quedó verde, pero el motor contó los intentos previos y cortó igual.
+Causa: `workflow.py` cuenta intentos de quality gate de forma acumulativa y detiene el pipeline al llegar a 3, sin revisar si el estado final en disco es verde. No distingue "falló y se reparó" de "falló y no se reparó".
+Impacto: confunde al operador (reporte de fallo vs éxito real en disco). El código de 5.1 quedó correcto.
+Siguiente acción sugerida (para la otra sesión): en `workflow.py`, tras el último intento de Pi, re-ejecutar el quality gate UNA vez más y usar ESE resultado como veredicto final; o bien, no incrementar retry_count si la pasada anterior fue verde. No relanzar el motor solo por este reporte (el código ya está bien).
+Regla: fallo de LÓGICA del motor (agente-side), no del proyecto. Registrado, espera gate humano.
+
