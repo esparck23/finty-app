@@ -90,7 +90,7 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
  **Etapa 5 — Modo Offline (PWA)
  Estado: 🔄 EN PROGRESO
  Dependencias: Etapa 4 completa
- Sub-paso activo: 5.2 — IndexedDB offline queue
+ Sub-paso activo: 5.4 — Manifest + iconos (instalable)
  	Sub-pasos (ejecutar UNO a la vez como criterio de aceptación, cada uno es un scope acotado):
 
 5.1 — Service Worker base (Serwist) (✅ COMPLETADO - 2026-07-10)
@@ -106,10 +106,16 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   Criterio medible: test unitario (Jest, archivo src/lib/offline/db.test.ts) que inserta y lee un registro offline y verifica is_offline_sync=false; `npm run build` verde; `npx tsc --noEmit` 0 errores.
   NO tocar: rutas API, proxy.ts, middleware, ni el SW de 5.1 (src/app/sw.ts).
 
-5.3 — Background sync
-  Archivo: src/app/sw.ts (extiende 5.1)
-  Scope: al recuperar conexión, enviar cola offline y marcar is_offline_sync=1
-  Criterio medible: test que simula online→offline→online y verifica flag=1; build verde.
+5.3 — Background sync (✅ COMPLETADO - 2026-07-13)
+  Archivo: src/app/sw.ts (EXTIENDE el SW de 5.1, NO reescribir desde cero) + src/lib/offline/db.ts ya existe
+  Archivos circundantes a LEER antes de codear (obligatorio):
+    - src/app/sw.ts (5.1, ubicado en src/app/sw.ts): registra SW con NetworkFirst para GET /api/categories y /api/transactions, cacheName 'api-cache-v1'. Tiene `self.addEventListener('fetch', ...)`, `self.skipWaiting()` y `clients.claim()` en install/activate. DEBES MODIFICAR este archivo para añadir el sync; NO crear uno nuevo.
+    - src/lib/offline/db.ts (5.2): exporta `saveOfflineTransaction(tx)`, `getOfflineTransactions(): Promise<Transaction[]>`, `markSynced(id): Promise<void>`. Store 'offline_transactions' en DB 'finty_offline_db', keyPath 'id'. Campo `is_offline_sync: boolean`; "flag=1" = `is_offline_sync === true`.
+    - src/types/transaction.ts: interfaz Transaction (linea 51 tiene is_offline_sync; otros campos: type/amount_usd/amount_bs/currency_primary/category_id/description/transaction_date).
+    - src/app/api/transactions/route.ts: POST /api/transactions existe (lo usa el sync para reenviar la cola).
+  Scope: implementar sync en segundo plano. Al recuperar conexión (evento `online` del navigator O `self.addEventListener('sync', ...)` con Background Sync API + `registration.sync.register('sync-transactions')`), leer cola con `getOfflineTransactions()`, por cada tx `fetch('/api/transactions', {method:'POST', body: JSON.stringify(tx), headers:{'Content-Type':'application/json'}})` y al éxito `markSynced(tx.id)`. Manejar errores (reintentar en próxima sync).
+  Criterio medible (OBLIGATORIO para que el gate pase): crear `src/lib/offline/sync.test.ts` que simula online→offline→online y verifica que tras el sync `markSynced` fue llamado / `is_offline_sync===true` en la cola. El test DEBE fallar si no hay implementación de sync. `npm run build` verde; `npx tsc --noEmit` 0 errores.
+  NO tocar: rutas API (usar POST /api/transactions existente), proxy.ts, middleware.
 
 5.4 — Manifest + iconos (instalable)
   Archivo: public/manifest.json + public/icons/*

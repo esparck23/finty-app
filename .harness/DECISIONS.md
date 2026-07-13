@@ -153,3 +153,10 @@ Contexto/Feedback (para Qwen):
 - Criterio de aceptación: test Jest que inserta y lee un registro offline; `npm run build` verde; `npx tsc --noEmit` 0 errores.
 - No tocar: rutas API, proxy.ts, middleware, ni el SW de 5.1.
 - Orquestación: motor A2A Factory (Qwen→Vibe→Pi si falla). Hermes registra y espera gate humano para commit.
+
+## DEC-020 (2026-07-11) — Etapa 5.3 Background sync
+- Alcance: extender src/app/sw.ts (de 5.1) con sync en segundo plano; usar db.ts (5.2): getOfflineTransactions() + markSynced(id).
+- Comportamiento: al recuperar conexión, POST cola a /api/transactions y marcar is_offline_sync=true.
+- Criterio: test online→offline→online verifica flag=1; build verde.
+- No tocar rutas API, proxy, middleware.
+- Ejecución: motor A2A Factory (Qwen→Vibe→Pi). Hermes verifica en disco y espera gate humano.

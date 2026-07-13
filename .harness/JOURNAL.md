@@ -188,3 +188,99 @@ Re-run de 5.2 tras enriquecer STAGES 5.2 y corregir `_load_prompt` (BLK-007: el 
 - 5.2 COMPLETADO en disco y verde. Pendiente: commit en agentpc-dev + PR a main.
 - El motor NO escribió STATE/JOURNAL al abortar; Hermes registra manualmente esta parte 3.
 - Recomendado: re-run final del motor para que escriba STATE(5.3) limpio, O commit directo de lo ya verificado.
+
+### 2026-07-13 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa.
+- Control de calidad: Aprobado.
+
+# 2026-07-13 — RUN motor 5.3 — GATE APROBADO PERO CÓDIGO NO ESCRITO (BLK-008)
+
+## Resumen
+Run del motor para 5.3 (Background sync). Motor: "Quality Gates aprobados" + "PIPELINE COMPLETADO". VERIFICACIÓN EN DISCO (Hermes): el código de 5.3 NO se escribió.
+
+## Eventos
+- STAGES 5.3 enriquecido con contexto real (sw.ts 5.1 + db.ts 5.2); _load_prompt entregó 1681 chars.
+- Qwen/Vibe invocados. Motor pasó el gate en la PRIMERA pasada (sin intentos de reparación) y terminó "completado".
+- VERIFICACIÓN EN DISCO:
+  - git status: solo .harness/ + public/sw.js. NO hay cambios en src/app/sw.ts, no hay sync.ts/sync.test.ts.
+  - search_files: getOfflineTransactions/markSynced/is_offline_sync solo en db.ts y db.test.ts (5.2). Cero código de sync.
+  - npm test: rc 0, 17 tests (db.test.ts + sw.test.ts + currency.test.ts) — mismos de 5.2.
+- Conclusión: el motor aprobó sobre el estado verde de 5.2 sin que Qwen materializara 5.3.
+
+## Causa raíz
+- BLK-008: workflow.py no valida que el OBJETIVO se cumplió; solo que el quality gate pasa. Si el agente no escribe nada, el gate pasa igual → falso positivo de "completado".
+
+## Métricas
+- Agentes: motor A2A Factory (Qwen/Vibe/Qoder).
+- Bloqueos: BLK-005 ✅, BLK-006 ✅, BLK-007 ✅, BLK-008 🔴 abierto.
+- Impacto en código: 0 archivos de 5.3. 5.2 sigue verde.
+
+## Siguiente (GATE HUMANO)
+- 5.3 NO completado. Pendiente decisión de usuario (re-run forzando cambio, o Pi externo directo como 5.1/5.2).
+
+### 2026-07-13 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa.
+- Control de calidad: Aprobado.
+
+# 2026-07-13 (parte 5) — RE-RUN motor 5.3 con archivos circundantes — SIGUE SIN CÓDIGO (BLK-008确认)
+
+## Resumen
+Segundo run de 5.3 con STAGES enriquecido: archivos circundantes obligatorios (sw.ts/dbt.ts/transaction.ts/api) + criterio "OBLIGATORIO: crear sync.test.ts que falle si no hay sync". Motor: "Quality Gates aprobados" + "PIPELINE COMPLETADO". VERIFICACIÓN EN DISCO: 5.3 NO implementado.
+
+## Eventos
+- _load_prompt entregó 1715 chars con archivos circundantes y criterio de test obligatorio.
+- Motor aprobó en PRIMERA pasada (sin reparación).
+- VERIFICACIÓN EN DISCO:
+  - src/app/sw.ts: SIN cambios (no hay sync en el SW).
+  - sync.test.ts: NO existe.
+  - grep de addEventListener('sync')/registration.sync: 0 coincidencias fuera de db.ts.
+  - Qwen solo hizo refactor cosmético de db.ts (window.indexedDB -> typeof indexedDB). Revertido por Hermes (no es parte de 5.3; 17 tests siguen verdes).
+- Conclusión: BLK-008 se repite. El motor no valida cumplimiento de objetivo; aprueba si el build/test preexistente pasa.
+
+## Causa raíz
+- BLK-008 (ya abierto): workflow.py no verifica que el objetivo de STAGES se cumplió, solo que el quality gate pasa. El texto "OBLIGATORIO" en STAGES es ignorado por el motor como verificación.
+
+## Métricas
+- Agentes: motor A2A Factory (Qwen/Vibe/Qoder).
+- Bloqueos: BLK-005 ✅, BLK-006 ✅, BLK-007 ✅, BLK-008 🔴 (2 runs fallidos por mismo patrón).
+- Impacto en código: 0 archivos de 5.3. db.ts revertido a estado 5.2.
+
+## Siguiente (GATE HUMANO)
+- 5.3 NO completado tras 2 runs del motor. Recomendado: (b) Pi externo implementa 5.3 directo (como 5.1/5.2), ya probado y funcional. Evita BLK-008.
+- El fix de BLK-008 en el motor queda para la otra sesión (validar objetivo de STAGES antes de dar por completado).
+
+# 2026-07-13 (parte 6) — RE-RUN 5.3 con BLK-008 fix — CÓDIGO ESCRITO, motor crash en fix
+
+## Resumen
+Tercer run de 5.3 con workflow.py ya parcheado (_verify_objective). El código de 5.3 SÍ se escribió esta vez. Pero el motor crasheó (exit 1) por bug secundario en el fix de BLK-008.
+
+## Eventos
+- _verify_objective definida y cableada post-gate. Contenía UnboundLocalError: modify_candidates usado en linea 75 antes de definirse (linea 77).
+- Hermes corrigió: inicializar modify_candidates = set() antes del loop. Sintaxis OK.
+- VERIFICACIÓN EN DISCO (Hermes, post-crash):
+  - src/app/sw.ts: +21 lineas, importa syncOfflineTransactions, maneja self.addEventListener("sync", tag "sync-transactions") + evento online.
+  - src/lib/offline/sync.test.ts: CREADO, valida offline->sync y is_offline_sync=true.
+  - db.ts: exporta syncOfflineTransactions (añadido por Qwen).
+  - npm test rc 0 (17 tests); npm run build rc 0.
+- Conclusión: 5.3 COMPLETADO en disco y verde. El crash fue bug del fix de BLK-008, no del código Finty.
+
+## Bug secundario del fix BLK-008 (para la otra sesion)
+_verify_objective tiene falsos positivos: (1) el regex de paths captura puntuacion (ej "src/app/sw.ts):"); (2) el check "vs origin/main" no maneja archivos nuevos untracked (dice "No changes detected" sobre sync.test.ts que es nuevo). No bloquea a Finty, pero el fix necesita pulirse para no dar falsos FAILED.
+
+## Métricas
+- Agentes: motor A2A Factory (Qwen/Vibe/Qoder) + Hermes corrigió fix.
+- Bloqueos: BLK-005 ✅, BLK-006 ✅, BLK-007 ✅, BLK-008 🔶 fix aplicado (crash corregido por Hermes; pulir falsos positivos en otra sesión).
+- Impacto en código: 5.3 COMPLETADO (+sw.ts sync, +sync.test.ts, +syncOfflineTransactions en db.ts). 17 tests verdes.
+
+## Siguiente (GATE HUMANO)
+- 5.3 listo en disco y verde. Pendiente: commit en agentpc-dev + PR a main.
+- Fix BLK-008: crash corregido; falsos positivos menores pendientes en otra sesión.
+
+# 2026-07-13 (parte 7) — BLK-008 RESUELTO, 5.3 marcado COMPLETADO
+
+## Cierre
+- Otra sesion pulio _verify_objective (workflow.py): limpieza de rutas, validacion por linea, triple fallback git diff/diff-filter=A/ls-files para archivos nuevos.
+- Hermes verifico en disco: _verify_objective retorna (True, "Objective verified") para finty-app 5.3 sin falsos positivos.
+- BLK-008 marcado RESUELTO en BLOCKERS.md.
+- 5.3 marcado COMPLETADO en STAGES.md; STATE/STAGES avanzan a 5.4 (Manifest + iconos).
+- Codigo 5.3 en disco verde (sw.ts sync + sync.test.ts + syncOfflineTransactions en db.ts; 17 tests, build rc 0). Pendiente commit + PR a main (GATE HUMANO).

@@ -5,7 +5,7 @@
 Commit: <pendiente de merge a main> (rama agentpc-dev)
 Salud: 🟢 verde
 
-Próxima acción: 5.2 — IndexedDB offline queue
+Próxima acción: 5.4 — Manifest + iconos (instalable)
   
 Bloqueos: BLK-004 resuelto (Qwen API error; Hermes terminó DEC-018).
 Cierre Etapa 4: COMPLETADA y mergeada (PR #3, #4, #5). Feedback 1-7 atendidos.
@@ -35,7 +35,7 @@ Links
 Vercel: https://finty-nu.vercel.app
 GitHub: https://github.com/esparck23/finty-app.git
 
-\1🟢 Salud: 🟢 Salud: Verde
+\1🟢 Salud: 🟢 Salud: 🟢 Salud: 🟢 Salud: Verde
 \1{"type":"session","version":3,"id":"019f5231-ca3f-7e48-a26f-f130fd9a3aed","timestamp":"2026-07-11T17:20:22.591Z","cwd":"C:\\Users\\Agent\\dev\\finty-app"}
 {"type":"agent_start"}
 {"type":"turn_start"}
@@ -486,3 +486,13 @@ Route (app)
 ƒ  (Dynamic)  server-rendered on demand
 \1./sandbox (Quality Gate FAILED)
 \1SÍ
+\1
+\1Próxima iteración desde prompt cargado.
+\1Sin bloqueos confirmados en esta corrida.
+\1./sandbox (Quality Gate PASSED)
+\1NO
+\1
+\1Próxima iteración desde prompt cargado.
+\1Sin bloqueos confirmados en esta corrida.
+\1./sandbox (Quality Gate PASSED)
+\1NO
