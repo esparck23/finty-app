@@ -282,3 +282,16 @@ Route (app)
   Collecting page data using 1 worker ...
   Generating static pages using 1 worker (0/1
 
+
+**BLK-008 — Motor da por COMPLETADO un sub-paso si el quality gate pasa, sin verificar que el código objetivo se escribió** [RESUELTO 2026-07-13]
+Fecha: 2026-07-13
+Bloquea: avance fiable de Etapas via motor A2A Factory.
+Síntoma: run de 5.3 → motor "Quality Gates aprobados" + "PIPELINE COMPLETADO". Pero en disco: src/app/sw.ts NO fue extendido, no hay sync.ts/sync.test.ts, working tree sin código nuevo. El build/test pasaba (rc 0, 17 tests) por los de 5.2. El motor terminó "aprobado" sobre el estado previo sin que Qwen produjera 5.3.
+Causa raíz: workflow.py considera el sub-paso completado si run_quality_gate retorna True. No valida que el OBJETIVO se cumplió (archivo/criterio de STAGES exista o cambió). Si Qwen no toca nada, el gate pasa igual y el motor asume éxito. Falso positivo de "completado" (complementario a BLK-006, falso negativo).
+Impacto: 5.3 no implementado; 0 archivos nuevos de sync.
+GATE HUMANO: NO reintentar a ciegas. (a) Re-run forzando cambio; (b) Pi externo directo (como 5.1/5.2); (c) otra.
+Regla: fallo LÓGICA del motor, corregido por Hermes. Espera decisión usuario.
+
+### 2026-07-13 15:00:04 — Crash del orquestador
+- Excepción: UnboundLocalError: cannot access local variable 'modify_candidates' where it is not associated with a value
+
