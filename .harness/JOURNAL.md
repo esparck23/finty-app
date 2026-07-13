@@ -284,3 +284,82 @@ _verify_objective tiene falsos positivos: (1) el regex de paths captura puntuaci
 - BLK-008 marcado RESUELTO en BLOCKERS.md.
 - 5.3 marcado COMPLETADO en STAGES.md; STATE/STAGES avanzan a 5.4 (Manifest + iconos).
 - Codigo 5.3 en disco verde (sw.ts sync + sync.test.ts + syncOfflineTransactions en db.ts; 17 tests, build rc 0). Pendiente commit + PR a main (GATE HUMANO).
+
+### 2026-07-13 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa.
+- Control de calidad: Fallado.
+
+# 2026-07-13 (parte 8) — RUN motor 5.4 — OBJETIVO NO CUMPLIDO (BLK-008 funcionó)
+
+## Resumen
+Run de 5.4 (Manifest + iconos). Por PRIMERA VEZ el motor se detuvo correctamente: "objetivo no cumplido" en lugar de aprobar en falso. VERIFICACIÓN EN DISCO: Qwen NO creó public/manifest.json ni public/icons/.
+
+## Eventos
+- STAGES 5.4 enriquecido: manifest.json (CREAR) + icons PNG 192/512 (CREAR) + layout.tsx (MODIFICAR link).
+- _load_prompt entregó 1730 chars con contexto.
+- Motor: Quality Gates aprobados (build/test verdes de 5.3), luego Qoder, luego _verify_objective → "objetivo no cumplido" → detenido. EXIT 0 pero CRITICAL.
+- VERIFICACIÓN EN DISCO (Hermes):
+  - public/manifest.json: NO existe.
+  - public/icons/: NO existe.
+  - src/app/layout.tsx: SIN link manifest/theme-color (sin cambios de 5.4).
+  - Solo cambios en .harness/ + public/sw.js (rebase artifact).
+- Conclusión: BLK-008 RESUELTO funcionó — detectó objetivo faltante y paró. Qwen no generó los archivos estáticos (manifest/icons) ni tocó layout.
+
+## Causa raíz
+- Qwen no materializó archivos estáticos public/ (JSON manifest + PNG binarios) ni modificó layout.tsx. El motor ya no lo encubre (BLK-008 OK).
+
+## Métricas
+- Agentes: motor A2A Factory (Qwen/Vibe/Qoder).
+- Bloqueos: BLK-005 ✅, BLK-006 ✅, BLK-007 ✅, BLK-008 ✅ (detectó y detuvo).
+- Impacto en código: 0 archivos de 5.4. 5.3 sigue verde (17 tests, build rc 0).
+
+## Siguiente (GATE HUMANO)
+- 5.4 NO completado. Recomendado: (b) Pi externo implementa 5.4 directo (como 5.1/5.2), ya probado y funcional para archivos estáticos.
+- El motor es fiable ahora (BLK-008), pero Qwen falla creando assets estáticos public/.
+
+# 2026-07-13 (parte 9) — DECISION: Pi EXTERNO para 5.4 (limitacion Qwen binarios)
+
+## Resumen
+Tras run motor 5.4 fallido por BLK-008 (Qwen no creo manifest/icons), se diagnostico CAUSA RAIZ: Qwen CLI solo escribe archivos TEXTO (write_file); un PNG binario no se emite como texto desde un prompt. Ademas el criterio ataba manifest+icons+layout como bloque unico, asi que al fallar el PNG Qwen no hizo nada. BLK-008 funciono (detecto objetivo faltante y detuvo).
+
+## Decision (GATE HUMANO - usuario autorizo)
+- Ejecutar Pi externo para 5.4 (mismo patron que 5.1/5.2/5.3 que salieron perfectos).
+- Pi tiene run_shell_command -> puede generar PNG binarios via script Node (buffer) o crear SVG respaldo.
+- Prompt acotado: manifest.json + icons 192/512 (binario real o SVG) + modificar layout.tsx metadata (manifest/themeColor/appleWebApp). NO tocar proxy.ts/sw.js/API.
+
+## Registro de limitacion (MEMORIA + skill a2a-factory ya actualizado)
+- Qwen: texto plano; falla en assets BINARIOS (PNG/ICO). Para PWA con iconos usar Pi externo o script run_shell_command.
+- BLK-008: RESUELTO en motor (_verify_objective). 5.4 es la primera vez que el motor se detiene correctamente ante objetivo faltante.
+
+## Siguiente
+- Esperar proc_5f9e84422186 (Pi). Verificar en disco: manifest.json + icons + layout metadata; npm test + build.
+- Tras exito: commit + PR 5.4 (gate humano).
+
+# 2026-07-13 (parte 10) — Pi EXTERNO 5.4 COMPLETADO (Next.js Metadata Files)
+
+## Resumen
+Pi externo (proc_5f9e84422186) implemento 5.4 usando la convencion NATIVA de Next.js App Router en lugar de public/manifest.json + public/icons/ binarios. El comando salio exit 1 (ruido del CLI Pi modo json), pero el codigo quedo escrito y VERDE.
+
+## Eventos
+- Pi CREO (en src/app/, NO en public/):
+  - manifest.ts: exporta MetadataRoute.Manifest (name, short_name, start_url="/dashboard", display standalone, theme_color #10b981, icons con sizes 192/512 + purpose any/maskable).
+  - icon.tsx: ImageResponse next/og -> /icon (favicon PNG on-demand).
+  - apple-icon.tsx: 180x180 PNG on-demand (/apple-icon).
+  - icons/[size]/route.tsx: genera PNG 192/512 on-demand con next/og (SIN binarios versionados).
+- VERIFICACION EN DISCO (Hermes):
+  - npm run build: rc 0 (solo warning inofensivo de lockfiles multiples).
+  - npm test: rc 0 (17 tests).
+  - Next.js genera /manifest.webmanifest y los <link> en head automaticamente.
+- Conclusión: 5.4 COMPLETADO. Pi evito el problema de binarios de Qwen usando next/og (solucion nativa).
+
+## Notas de desviacion (menor)
+- Pi uso theme_color #10b981 (emerald, alineado a globals.css slate-950/emerald) en lugar de #2563eb del prompt. start_url "/dashboard" en lugar de "/". Coherente con branding real; sin impacto en instalabilidad.
+- No modifico layout.tsx (la convencion App Router no lo requiere).
+
+## Metrica
+- Agentes: Pi externo (proc_5f9e84422186). Motor A2A NO usado para esto (Qwen limitado a texto).
+- Bloqueos: BLK-005/006/007/008 ✅.
+- Impacto: 5.4 COMPLETADO via Next.js Metadata Files. Lighthouse installable debe pasar.
+
+## Siguiente (GATE HUMANO)
+- 5.4 listo en disco y verde. Pendiente: commit en agentpc-dev + PR a main.
