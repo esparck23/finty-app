@@ -118,9 +118,17 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   NO tocar: rutas API (usar POST /api/transactions existente), proxy.ts, middleware.
 
 5.4 — Manifest + iconos (instalable)
-  Archivo: public/manifest.json + public/icons/*
-  Scope: manifest con name, icons 192/512, theme_color; link en layout
-  Criterio medible: Chrome DevTools → Application → Manifest válido; Lighthouse PWA installable.
+  Archivos a crear/modificar (OBLIGATORIO para que el gate pase):
+    - public/manifest.json (CREAR): JSON con name "Finty", short_name "Finty", description, start_url "/", display "standalone", background_color "#ffffff", theme_color "#2563eb", y "icons" array con al menos {src:"/icons/icon-192.png", sizes:"192x192", type:"image/png"}, {src:"/icons/icon-512.png", sizes:"512x512", type:"image/png"}, y opcional SVG. El manifest DEBE ser válido JSON.
+    - public/icons/icon-192.png y public/icons/icon-512.png (CREAR): iconos PNG reales (pueden ser placeholders generados: un cuadrado con fondo theme_color y la letra "F", o usar SVG convertido). También puede crear public/icons/icon.svg como respaldo. CRÍTICO: Lighthouse PWA installable exige al menos un icono PNG 192 y otro 512 con purpose any.
+    - src/app/layout.tsx (MODIFICAR): añadir en el <head> el link <link rel="manifest" href="/manifest.json" /> y <meta name="theme-color" content="#2563eb" /> y <link rel="apple-touch-icon" href="/icons/icon-192.png" />. El archivo tiene `export default function RootLayout({` en linea 21; el <head> está cerca. NO reescribir el layout, solo inyectar esos tags.
+  Archivos circundantes existentes (contexto, NO tocar):
+    - src/proxy.ts: matcher ya excluye 'icons' y 'manifest.json' del proxy (linea 34) → no requiere cambios.
+    - @serwist/next ^9.5.11 en package.json (SW ya lo maneja en 5.1).
+    - public/sw.js: generado por Serwist en build (no tocar).
+  Scope: hacer la PWA instalable. Manifest válido + iconos PNG 192/512 presentes + link en layout.
+  Criterio medible (OBLIGATORIO): tras el build, `public/manifest.json` existe y es JSON válido; `public/icons/icon-192.png` y `public/icons/icon-512.png` existen y tienen tamaño > 0 bytes; `src/app/layout.tsx` contiene `rel="manifest"` y `theme-color`. `npm run build` verde; `npx tsc --noEmit` 0 errores.
+  NO tocar: src/proxy.ts, public/sw.js, rutas API, middleware.
 
 5.5 — Verificación Cache Storage
   Scope: comprobar en Chrome DevTools → Application → Cache Storage que /api/categories y /api/transactions quedan cacheados

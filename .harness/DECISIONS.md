@@ -160,3 +160,9 @@ Contexto/Feedback (para Qwen):
 - Criterio: test online→offline→online verifica flag=1; build verde.
 - No tocar rutas API, proxy, middleware.
 - Ejecución: motor A2A Factory (Qwen→Vibe→Pi). Hermes verifica en disco y espera gate humano.
+
+## DEC-021 (2026-07-13) — Etapa 5.4 Manifest + iconos (instalable)
+- Alcance: public/manifest.json (CREAR) + public/icons/icon-192.png + icon-512.png (CREAR, PNG reales) + src/app/layout.tsx (MODIFICAR: link manifest+theme-color+apple-touch).
+- Contexto: Serwist ya en 5.1; proxy.ts excluye icons/manifest del matcher (no tocar). theme_color #2563eb.
+- Criterio: manifest JSON valido; icons PNG >0 bytes; layout con rel="manifest" y theme-color; build verde; tsc 0 errores.
+- Nota: BLK-008 ya resuelto (_verify_objective valida archivos/cambios) -> el motor no aprobara en falso.
