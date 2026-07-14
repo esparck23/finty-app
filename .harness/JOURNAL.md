@@ -377,3 +377,24 @@ Pi externo (proc_5f9e84422186) implemento 5.4 usando la convencion NATIVA de Nex
 
 ## Meta
 Resolver de raiz el problema recurrente: antes se rebasaba sobre origin/agentpc-dev (remoto contaminado) -> cada PR cargaba commits ya mergeados -> conflicto. Ahora rebase sobre origin/main + force-push unico de limpieza. Con rama-por-etapa esto ya no ocurre.
+
+# 2026-07-14 — Cierre Etapa 5 (5.5) + STATE/STAGES saneados
+
+## Resumen
+Cierre documental de la Etapa 5 completa (5.1-5.5). PR #12 mergeado (39e7b3e) con solo archivos de arnés, resolviendo el conflicto de #11 (5.4 duplicado ya en main via #10).
+
+## Eventos
+- 5.5 Verificación Cache Storage: checklist manual — Chrome DevTools → Application → Cache Storage confirma GET /api/categories y /api/transactions cacheados bajo 'api-cache-v1' (NetworkFirst de 5.1). Build verde.
+- Etapa 5 marcada COMPLETADA en STATE.md y STAGES.md (sub-pasos 5.1-5.5 ✅).
+- Nueva rama feat/5.5-state (DEC-022: rama por etapa) documenta el cierre limpio.
+- Commit main 39e7b3e (PR #12) es el cierre oficial de Etapa 5.
+
+## Métricas
+- PRs Etapa 5: #7, #8, #9, #10 (código 5.1-5.4), #12 (docs cierre).
+- Agentes: motor A2A Factory (Qwen/Vibe/Qoder) + Pi externo (5.1/5.4) + Hermes (correcciones motor).
+- Bloqueos: BLK-005/006/007/008 ✅ resueltos.
+- Tests: 17 Jest pasando; build rc 0.
+
+## Siguiente
+- Etapa 6 — Automatización de Reportes (API /api/reports, PDF/CSV, GitHub Action semanal).
+- Rama propia feat/6.x-reports por DEC-022.

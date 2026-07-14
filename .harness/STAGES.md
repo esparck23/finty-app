@@ -88,9 +88,10 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
 
  
  **Etapa 5 — Modo Offline (PWA)
- Estado: 🔄 EN PROGRESO
+ Estado: ✅ COMPLETADA
+ Fecha cierre: 2026-07-14
  Dependencias: Etapa 4 completa
- Sub-paso activo: 5.4 — Manifest + iconos (instalable)
+ Sub-paso activo: 5.5 — Verificación Cache Storage (✅ COMPLETADO)
  	Sub-pasos (ejecutar UNO a la vez como criterio de aceptación, cada uno es un scope acotado):
 
 5.1 — Service Worker base (Serwist) (✅ COMPLETADO - 2026-07-10)
@@ -130,9 +131,13 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   Criterio medible (OBLIGATORIO): tras el build, `public/manifest.json` existe y es JSON válido; `public/icons/icon-192.png` y `public/icons/icon-512.png` existen y tienen tamaño > 0 bytes; `src/app/layout.tsx` contiene `rel="manifest"` y `theme-color`. `npm run build` verde; `npx tsc --noEmit` 0 errores.
   NO tocar: src/proxy.ts, public/sw.js, rutas API, middleware.
 
-5.5 — Verificación Cache Storage
+5.5 — Verificación Cache Storage (✅ COMPLETADO - 2026-07-14)
   Scope: comprobar en Chrome DevTools → Application → Cache Storage que /api/categories y /api/transactions quedan cacheados
   Criterio medible: checklist manual firmado en JOURNAL; build verde.
+  Notas: confirmado cache 'api-cache-v1' con GET /api/categories y /api/transactions (NetworkFirst). Etapa 5 COMPLETADA.
+
+**Estado Etapa 5: ✅ COMPLETADA (2026-07-14)**
+Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅. Verificación: 17 tests Jest, build rc 0. Siguiente: Etapa 6 Reportes.
 
  
 **Etapa 6 — Automatización de Reportes

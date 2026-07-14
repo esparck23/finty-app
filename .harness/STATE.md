@@ -1,8 +1,8 @@
 **STATE — Finty**
 
 **Etapa actual: 5/7 — Modo Offline (PWA) ✅ COMPLETADA**
-Última sesión: 2026-07-13
-Commit main: verificar tras merge del PR del usuario
+Última sesión: 2026-07-14
+Commit main: 39e7b3e (PR #12, cierre Etapa 5 + STATE limpio)
 Salud: 🟢 verde
 Próxima acción: Etapa 6 — Automatización de Reportes (API /api/reports, PDF CSV, GitHub Action semanal)
 Bloqueos activos: ninguno (BLK-005/006/007/008 ✅ resueltos)
@@ -17,6 +17,7 @@ No tocar:
 - 5.2 IndexedDB offline queue: src/lib/offline/db.ts + db.test.ts.
 - 5.3 Background sync: sync en sw.ts + src/lib/offline/sync.test.ts + syncOfflineTransactions en db.ts.
 - 5.4 Manifest + iconos: Next.js Metadata Files (manifest.ts, icon.tsx, apple-icon.tsx, icons/[size]/route.tsx). Instalable.
+- 5.5 Verificación Cache Storage: checklist manual en JOURNAL (Chrome DevTools → Application → Cache Storage confirma /api/categories y /api/transactions cacheados bajo 'api-cache-v1'). Build verde.
 - Verificación: npm test (Jest) 17 passed; npm run build rc 0.
 
 **Contexto rápido**
