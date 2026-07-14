@@ -363,3 +363,17 @@ Pi externo (proc_5f9e84422186) implemento 5.4 usando la convencion NATIVA de Nex
 
 ## Siguiente (GATE HUMANO)
 - 5.4 listo en disco y verde. Pendiente: commit en agentpc-dev + PR a main.
+
+# 2026-07-13 (parte 11) — DECISION usuario: rama por etapa + limpieza
+
+## Decisión usuario (duradera)
+- "no usaremos esa rama [agentpc-dev] sino que cada etapa tendra su propia rama. Cuando se supere la etapa, nueva rama."
+- Reemplaza ciclo recurrente de agentpc-dev. Registrado en DEC-022 + MEMORIA (§ Ramas por etapa).
+
+## Limpieza 5.4 (en curso)
+- Rebase local de agentpc-dev sobre origin/main: cayeron commits viejos (docs Etapa 0 + 5.2 + 5.3 ya en main). Queda SOLO 5.4 (c83c608). 17 tests + build verdes.
+- Force-push de limpieza a origin/agentpc-dev BLOQUEADO por sandbox (vencia consentimiento). PENDIENTE: usuario debe aprobar en UI, o usar otra via.
+- Tras force-push: PR #10 quedara MERGEABLE (diff local = solo 5.4).
+
+## Meta
+Resolver de raiz el problema recurrente: antes se rebasaba sobre origin/agentpc-dev (remoto contaminado) -> cada PR cargaba commits ya mergeados -> conflicto. Ahora rebase sobre origin/main + force-push unico de limpieza. Con rama-por-etapa esto ya no ocurre.

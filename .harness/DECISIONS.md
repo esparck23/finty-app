@@ -166,3 +166,11 @@ Contexto/Feedback (para Qwen):
 - Contexto: Serwist ya en 5.1; proxy.ts excluye icons/manifest del matcher (no tocar). theme_color #2563eb.
 - Criterio: manifest JSON valido; icons PNG >0 bytes; layout con rel="manifest" y theme-color; build verde; tsc 0 errores.
 - Nota: BLK-008 ya resuelto (_verify_objective valida archivos/cambios) -> el motor no aprobara en falso.
+
+## DEC-022 (2026-07-13) — Estrategia de ramas: UNA rama por etapa
+- A partir de ahora, NO se usa agentpc-dev como rama unica de desarrollo.
+- Cada etapa tiene su PROPIA rama (ej: feat/5.4-manifest, feat/5.5-xxx).
+- Al superar la etapa (merge a main) se crea rama NUEVA para la siguiente.
+- PR siempre: rama-de-etapa -> main.
+- Esto reemplaza el ciclo recurrente de agentpc-dev (conflicto/rebase/force-push).
+- 5.4 queda en agentpc-dev (pendiente force-push de limpieza del remoto + merge PR #10). Las siguientes etapas usan rama propia.
