@@ -5,6 +5,7 @@
 Commit main: 67d3cb5 (PR #15, JOURNAL micro-paso 5.5 verificado por Pi)
 Salud: 🟢 verde
 Próxima acción: 5.6 NavigationRoute + fallback app shell (instalar/ver offline) — cubre bug PR #13
+Acción / Scope: Programar el NavigationRoute con NetworkFirst + fallback al app shell cacheado (o /dashboard). Usar precacheEntries + capturar respuestas de navegación. El SW debe servir la navegación offline (no solo /api/*). Archivos a modificar: `src/app/sw.ts` (EXTIENDE el SW de 5.1, NO reescribir desde cero), `src/app/layout.tsx` (MODIFICAR: inyectar metas iOS/Android). Criterio medible (OBLIGATORIO): tras el build, `src/app/sw.ts` contiene `NavigationRoute` (o handling de request.mode==='navigate') y fallback a /dashboard cacheado; `npm run build` verde; `npx tsc --noEmit` 0 errores; `npm test` 17+ pasando.
 Bloqueos activos: ninguno (BLK-005/006/007/008 ✅ resueltos)
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
