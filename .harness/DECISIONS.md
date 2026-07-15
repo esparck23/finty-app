@@ -174,3 +174,16 @@ Contexto/Feedback (para Qwen):
 - PR siempre: rama-de-etapa -> main.
 - Esto reemplaza el ciclo recurrente de agentpc-dev (conflicto/rebase/force-push).
 - 5.4 queda en agentpc-dev (pendiente force-push de limpieza del remoto + merge PR #10). Las siguientes etapas usan rama propia.
+
+## DEC-023 (2026-07-14) — Etapa 5.6-5.9 Offline finishing (motor A2A Factory)
+- Rama objetivo: feat/5.x_offline-finishing (base origin/main 503d823)
+- Contexto: usuario reporta en PR #13 que offline no sirve en /transacciones /categorias; PWA no muestra prompt de instalacion en movil (iOS/Android) y consume Vercel. Causa: SW (5.1) solo cachea GET /api/*, NO el app shell / navegacion.
+- Alcance (sub-pasos, UNO a la vez):
+  - 5.6: sw.ts -> NavigationRoute + NetworkFirst + fallback al app shell cacheado (o /dashboard). Usar precacheEntries + capturar respuestas de navegacion. NO reescribir desde cero: extender sw.ts de 5.1.
+  - 5.7: Precache -> incluir rutas clave (/dashboard, /transacciones, /categorias) en manifest del SW para carga sin red.
+  - 5.8: layout.tsx -> inyectar metas iOS (apple-mobile-web-app-capable, status-bar-style) + Android; confirmar apple-touch-icon (ya existe via apple-icon.tsx). NO reescribir layout, solo inyectar tags en <head>.
+  - 5.9: Verificar en movil real: prompt de instalacion aparece + abrir offline sirve la app.
+- Criterio de aceptacion (gate): build verde; npm test (Jest) 17+ pasando; tsc 0 errores; sw.ts sirve navegacion offline (NetworkFirst + fallback); manifest referencia iconos validos; metas iOS/Android presentes en <head>.
+- NO tocar: rutas API, proxy.ts, middleware, public/sw.js (generado).
+- Flujo: Pi (scaffolding) -> Vibe (iteracion) -> Hermes Compiler (gate vs origin/main) -> Qoder/Qwen si falla.
+- Nota: micro-paso 5.5 (verificar cache de /api/*) ya registrado en STATE.md como foco previo; si el matcher no cachea, corregir en sw.ts antes de 5.6.

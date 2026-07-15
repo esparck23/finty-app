@@ -18,6 +18,7 @@ No tocar:
 - 5.3 Background sync: sync en sw.ts + src/lib/offline/sync.test.ts + syncOfflineTransactions en db.ts.
 - 5.4 Manifest + iconos: Next.js Metadata Files (manifest.ts, icon.tsx, apple-icon.tsx, icons/[size]/route.tsx). Instalable.
 - 5.5 Verificación Cache Storage: checklist manual en JOURNAL (Chrome DevTools → Application → Cache Storage confirma /api/categories y /api/transactions cacheados bajo 'api-cache-v1'). Build verde.
+  - MICRO-PASO FOCO (motor A2A Factory): verificar que el SW cachea efectivamente GET /api/categories y GET /api/transactions. Criterio: tras navegar online y revisar Cache Storage, ambas rutas presentes en 'api-cache-v1' (NetworkFirst). Si no aparecen, el matcher del SW (runtimeCaching en sw.ts) es el punto a corregir antes de 5.6.
 - Verificación: npm test (Jest) 17 passed; npm run build rc 0.
 
 **Contexto rápido**
