@@ -1,10 +1,10 @@
 **STATE — Finty**
 
-**Etapa actual: 5/7 — Modo Offline (PWA) ✅ COMPLETADA**
-Última sesión: 2026-07-14
-Commit main: 39e7b3e (PR #12, cierre Etapa 5 + STATE limpio)
+**Etapa actual: 5/7 — Modo Offline (PWA) 🔄 EN PROGRESO (finishing 5.6-5.9)**
+Última sesión: 2026-07-15
+Commit main: 67d3cb5 (PR #15, JOURNAL micro-paso 5.5 verificado por Pi)
 Salud: 🟢 verde
-Próxima acción: Etapa 6 — Automatización de Reportes (API /api/reports, PDF CSV, GitHub Action semanal)
+Próxima acción: 5.6 NavigationRoute + fallback app shell (instalar/ver offline) — cubre bug PR #13
 Bloqueos activos: ninguno (BLK-005/006/007/008 ✅ resueltos)
 No tocar:
 - trg_audit_delete — dropeado permanentemente (conflicto FK). Audit DELETE desde código.
@@ -18,7 +18,8 @@ No tocar:
 - 5.3 Background sync: sync en sw.ts + src/lib/offline/sync.test.ts + syncOfflineTransactions en db.ts.
 - 5.4 Manifest + iconos: Next.js Metadata Files (manifest.ts, icon.tsx, apple-icon.tsx, icons/[size]/route.tsx). Instalable.
 - 5.5 Verificación Cache Storage: checklist manual en JOURNAL (Chrome DevTools → Application → Cache Storage confirma /api/categories y /api/transactions cacheados bajo 'api-cache-v1'). Build verde.
-  - MICRO-PASO FOCO (motor A2A Factory): verificar que el SW cachea efectivamente GET /api/categories y GET /api/transactions. Criterio: tras navegar online y revisar Cache Storage, ambas rutas presentes en 'api-cache-v1' (NetworkFirst). Si no aparecen, el matcher del SW (runtimeCaching en sw.ts) es el punto a corregir antes de 5.6.
+  - MICRO-PASO FOCO (motor A2A Factory): verificar que el SW cachea efectivamente GET /api/categories y GET /api/transactions. ✅ VERIFICADO 2026-07-15 por Pi (skill coding-agents/pi): VERDICT_5_5=SI. Matcher sw.ts líns 11-17 (GET + pathname exacto), NetworkFirst api-cache-v1. Funciona en Vercel. NO cubre app shell (ver 5.6).
+- 5.6 NavigationRoute + fallback app shell: añadir NavigationRoute con NetworkFirst + fallback al app shell cacheado (o /dashboard) en sw.ts; precache rutas clave; metas iOS/Android en layout.tsx. OBJETIVO: el prompt de instalación aparezca y abrir offline sirva la app (no consuma Vercel). Cubre bug reportado en PR #13.
 - Verificación: npm test (Jest) 17 passed; npm run build rc 0.
 
 **Contexto rápido**
