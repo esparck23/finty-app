@@ -398,3 +398,28 @@ Cierre documental de la Etapa 5 completa (5.1-5.5). PR #12 mergeado (39e7b3e) co
 ## Siguiente
 - Etapa 6 — Automatización de Reportes (API /api/reports, PDF/CSV, GitHub Action semanal).
 - Rama propia feat/6.x-reports por DEC-022.
+
+# 2026-07-14 (parte 14) — Micro-paso 5.5 verificado por Pi (solo JOURNAL)
+
+## Resumen
+Ejecución del micro-paso 5.5 (foco del motor, registrado en STATE) usando el agente **Pi** (skill coding-agents/pi), NO el motor A2A Factory. Objetivo: confirmar que el SW cachea efectivamente GET /api/categories y GET /api/transactions.
+
+## VERDICT_5_5 = SI
+El SW cachea ambas rutas. Configuración correcta y funcional.
+
+## Detalle (reporte de Pi)
+- Archivos revisados: `src/app/sw.ts` (43 líneas), `src/lib/offline/db.ts` (140 líneas).
+- Matcher (sw.ts, líns 11-17): `request.method === "GET" && (url.pathname === "/api/categories" || url.pathname === "/api/transactions")`.
+- NetworkFirst con `cacheName: "api-cache-v1"`. Sin denyList. Query strings no rompen el matcher (pathname excluye search).
+- Funciona en Vercel: `skipWaiting()` + `clients.claim()` presentes.
+- Condición: las entradas aparecen en DevTools → Application → Cache Storage bajo `api-cache-v1` solo TRAS la primera respuesta GET exitosa (NetworkFirst escribe al responder red).
+- Observación: matcher usa igualdad estricta (`===`), no `startsWith`. Sub-rutas (/api/categories/all, /api/transactions/summary) NO se cachearían. Confirmar que la app usa pathname exactos.
+
+## Alcance
+5.5 verifica cacheo de DATOS API. NO cubre el problema de PR #13 (app shell/navegación sin cachear → offline consume Vercel). Eso es 5.6 (NavigationRoute).
+
+## Agente
+- Pi v0.80.3 (--mode json). Sin cambios en disco (solo lectura/inspección).
+
+## Siguiente
+- 5.6: NavigationRoute + fallback app shell (instalar/ver offline) — cubre el bug de PR #13.
