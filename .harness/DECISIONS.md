@@ -187,3 +187,11 @@ Contexto/Feedback (para Qwen):
 - NO tocar: rutas API, proxy.ts, middleware, public/sw.js (generado).
 - Flujo: Pi (scaffolding) -> Vibe (iteracion) -> Hermes Compiler (gate vs origin/main) -> Qoder/Qwen si falla.
 - Nota: micro-paso 5.5 (verificar cache de /api/*) ya registrado en STATE.md como foco previo; si el matcher no cachea, corregir en sw.ts antes de 5.6.
+
+## DEC-024 (2026-07-15) — DISPARO motor A2A Factory (Codear) para 5.6-5.9
+- Contexto: tras verificar 5.5 (VERDICT_5_5=SI por Pi), el usuario autoriza "Codear" (modo orquestación A2A del motor) para implementar 5.6-5.9 en `feat/5.x_offline-finishing`.
+- Rama objetivo: `feat/5.x_offline-finishing` (ya con STATE/STAGES/DEC preparados, solo arnés).
+- Motor ya configurado: projects.yaml/active.yaml -> finty-app; nodes.py con `PYTHONPATH=` en Vibe (BLK-005).
+- Borrador previo del motor (NavigationRoute mal usado + apple-icon ruta inexistente) fue DESCARTADO en disco antes de este disparo. El motor debe partir de sw.ts/layout.tsx limpios de main.
+- Hermes NO arma prompt con contexto de archivos: delega al pipeline (Pi->Vibe->Compiler->Qoder/Qwen). No reporta paso a paso. Si falla agente-side: BLOCKERS.md + aviso + espera decisión usuario.
+- Gate BLK-008: verify_objective lee STAGES (5.6 activo) y diff vs origin/main en src/app/sw.ts + src/app/layout.tsx + build/test/tsc.
