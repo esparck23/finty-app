@@ -110,14 +110,6 @@ navigationRoute.setCatchHandler(async ({ event }: any) => {
     return Response.error();
   }
 
-  // Bug 4 (5.9): en recarga offline, servir la propia URL desde el precache
-  // global de Serwist (que incluye las rutas de 5.7: /transacciones, etc.)
-  // antes de caer al fallback de /dashboard.
-  const precached = await caches.match(event.request);
-  if (precached) {
-    return precached;
-  }
-
   const cache = await caches.open(PAGES_CACHE_NAME);
   for (const url of OFFLINE_FALLBACK_URLS) {
     const cached = await cache.match(url);
