@@ -298,3 +298,30 @@ Regla: fallo LÓGICA del motor, corregido por Hermes. Espera decisión usuario.
 
 ### 2026-07-13 16:33:49 — BLK-008: objetivo STAGES no cumplido
 - BLK-008 objective not met: Missing file: public/icons/icon-192.png; Missing file: public/icons/icon-512.png; Missing file: public/icons/icon.svg; Missing file: public/manifest.json; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 00:52:13 — BLK-008: objetivo STAGES no cumplido
+- BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:24:21 — Fallo en Calidad/Objetivo
+ | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:28:36 — Fallo en Calidad/Objetivo
+ | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:29:03 — Fallo en Calidad/Objetivo
+ | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:29:26 — Fallo en Calidad/Objetivo
+ | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:30:14 — Fallo en Calidad/Objetivo
+ | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:40:07 — Fallo en Calidad/Objetivo
+ | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:41:43 — Fallo en Calidad/Objetivo
+Compilation error: [WinError 2] El sistema no puede encontrar el archivo especificado | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 16:58:54 — Fallo en Calidad/Objetivo
+Compilation error: [WinError 2] El sistema no puede encontrar el archivo especificado | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx

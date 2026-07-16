@@ -91,7 +91,7 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
  Estado: 🔄 EN PROGRESO (finishing 5.6-5.9)
  Fecha cierre: 2026-07-14 (5.1-5.5)
  Dependencias: Etapa 4 completa
- Sub-paso activo: 5.6 — NavigationRoute + fallback app shell (instalar/ver offline)
+ Sub-paso activo: 5.7 — Precache de rutas clave (instalar/ver offline)
  	Sub-pasos (ejecutar UNO a la vez como criterio de aceptación, cada uno es un scope acotado):
 
 5.1 — Service Worker base (Serwist) (✅ COMPLETADO - 2026-07-10)
@@ -136,7 +136,7 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   Criterio medible: checklist manual firmado en JOURNAL; build verde.
   Notas: confirmado cache 'api-cache-v1' con GET /api/categories y /api/transactions (NetworkFirst). Etapa 5 base COMPLETADA; sigue finishing 5.6-5.9.
 
-5.6 — NavigationRoute + fallback app shell (instalar/ver offline)
+5.6 — NavigationRoute + fallback app shell (✅ COMPLETADO - 2026-07-15)
   Archivos a modificar: `src/app/sw.ts` (EXTIENDE el SW de 5.1, NO reescribir desde cero), `src/app/layout.tsx` (MODIFICAR: inyectar metas iOS).
   Scope: añadir NavigationRoute con NetworkFirst + fallback al app shell cacheado (o /dashboard). Usar precacheEntries + capturar respuestas de navegación. El SW debe servir la navegación offline (no solo /api/*).
   Criterio medible (OBLIGATORIO): tras el build, `src/app/sw.ts` contiene `NavigationRoute` (o handling de request.mode==='navigate') y fallback a /dashboard cacheado; `npm run build` verde; `npx tsc --noEmit` 0 errores; `npm test` 17+ pasando.
@@ -156,8 +156,8 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   Scope: en móvil real, el prompt de instalación aparece y abrir offline sirve la app (no consume Vercel).
   Criterio medible: checklist manual firmado en JOURNAL; build verde.
 
-**Estado Etapa 5: 🔄 EN PROGRESO (finishing 5.6-5.9)**
-Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅, 5.6 🔄, 5.7 ⬜, 5.8 ⬜, 5.9 ⬜. Base: 17 tests Jest, build rc 0. Rama: feat/5.x_offline-finishing. Siguiente tras 5.9: Etapa 6 Reportes.
+**Estado Etapa 5: 🔄 EN PROGRESO (finishing 5.7-5.9)**
+Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅, 5.6 ✅, 5.7 🔄, 5.8 ⬜, 5.9 ⬜. Base: 17 tests Jest, build rc 0. Rama: feat/5.x_offline-finishing. Siguiente tras 5.9: Etapa 6 Reportes.
 
  
 **Etapa 6 — Automatización de Reportes
