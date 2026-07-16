@@ -143,9 +143,11 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   NO tocar: rutas API, proxy.ts, middleware, public/sw.js (generado).
 
 5.7 — Precache de rutas clave
+  Estado: ✅ COMPLETADO - 2026-07-15
   Archivos a modificar: `src/app/sw.ts` (EXTIENDE 5.6).
   Scope: incluir rutas clave (/dashboard, /transacciones, /categorias) en el manifest del SW (precacheEntries) para carga sin red.
   Criterio medible: `src/app/sw.ts` incluye las rutas en precacheEntries; build verde; tsc 0 errores.
+  Implementación: `precacheEntries: [...(self.__SW_MANIFEST || []), ...PRECACHE_ROUTE_ENTRIES]` con revision estático `finty-routes-v1`. Cuatro rutas precacheadas: /dashboard, /transacciones, /categorias, /transparencia. Confirmado en public/sw.js compilado. Tests 18 OK.
 
 5.8 — Metas iOS/Android en layout
   Archivos a modificar: `src/app/layout.tsx` (MODIFICAR: inyectar metas en <head>).
@@ -156,8 +158,8 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   Scope: en móvil real, el prompt de instalación aparece y abrir offline sirve la app (no consume Vercel).
   Criterio medible: checklist manual firmado en JOURNAL; build verde.
 
-**Estado Etapa 5: 🔄 EN PROGRESO (finishing 5.7-5.9)**
-Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅, 5.6 ✅, 5.7 🔄, 5.8 ⬜, 5.9 ⬜. Base: 17 tests Jest, build rc 0. Rama: feat/5.x_offline-finishing. Siguiente tras 5.9: Etapa 6 Reportes.
+**Estado Etapa 5: 🔄 EN PROGRESO (finishing 5.8-5.9)**
+Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅, 5.6 ✅, 5.7 ✅, 5.8 ⬜, 5.9 ⬜. Base: 18 tests Jest, build rc 0. Rama: feat/5.x_offline-finishing. Siguiente tras 5.9: Etapa 6 Reportes.
 
  
 **Etapa 6 — Automatización de Reportes

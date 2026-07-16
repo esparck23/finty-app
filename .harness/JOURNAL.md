@@ -496,5 +496,42 @@ Se aplicaron las correcciones del **punto 6** en `nodes.py`:
 
 ## Siguiente
 - **5.6 marcado como completado** en `STATE.md`.
-- **Etapa 5 cerrada** (5.1-5.6 ✅).
-- **Próximo paso:** 6.1 — Diseño de API de Reportes (`/api/reports`).
+- **Sub-pasos 5.1-5.6 ✅** (5.7-5.9 pendientes para cerrar Etapa 5 — ver STAGES.md).
+- **Próximo paso:** 5.7 — Precache de rutas clave en `precacheEntries`.
+
+# 2026-07-15 (parte 3) — Etapa 5.7: Precache de rutas clave COMPLETADO
+
+## Resumen
+Precache explícito de las rutas App Router que `__SW_MANIFEST` autogenerado por @serwist/next **no cubre** (serwist solo escanea `public/` y `_next/static/`; las páginas server-rendered no entran). Se añadieron `/dashboard`, `/transacciones`, `/categorias` y `/transparencia` a `precacheEntries` con un revision estático (`finty-routes-v1`) para garantizar carga sin red del app shell.
+
+## Eventos
+- **Modificación de `src/app/sw.ts`:** se extendió el SW existente (5.1/5.3/5.6) **sin reescribirlo desde cero**. `precacheEntries: self.__SW_MANIFEST` se reemplazó por `[...(self.__SW_MANIFEST || []), ...PRECACHE_ROUTE_ENTRIES]`. El `NavigationRoute` de 5.6 y el `install` warm-up del cache `pages` siguen intactos: precache (oficial de Serwist) y pages cache (estrategia 5.6) coexisten.
+- **Verificación de compilación:** `public/sw.js` (generado) contiene `precacheEntries:[...staticAssets,{url:"/dashboard",revision:"finty-routes-v1"},{url:"/transacciones",...},{url:"/categorias",...},{url:"/transparencia",...}]` — confirmado con grep.
+- **Validación del Quality Gate:**
+  - `npm run build`: ✅ **Verde** (Next.js 16.2.10 + Serwist 9.5.11).
+  - `npx tsc --noEmit`: ✅ **0 errores**.
+  - `npm test`: ✅ **18 tests pasando** (4 suites: currency, db, sync, sw).
+
+## Métricas
+- Agentes: Pi (scaffolding directo, scope acotado a sw.ts).
+- Impacto en código: `src/app/sw.ts` (1 archivo, extensión de 5.6).
+- No se tocaron: rutas API, `src/proxy.ts`, `middleware`, `public/sw.js` (generado), `src/app/layout.tsx`.
+
+## Siguiente
+- **5.7 marcado como completado** en `STATE.md`.
+- **Siguiente sub-paso:** 5.8 — Metas iOS/Android en layout (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, confirmar `apple-touch-icon`).
+
+### 2026-07-15 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa.
+- Control de calidad: Fallado (bucle de reparación BLK-008).
+
+### 2026-07-15 (última sesión) — RESOLUCIÓN BLK-009: motor no detectaba modificaciones de archivos existentes
+- **Hallazgo:** el motor corría el bucle completo Pi→Vibe→Compiler→Qwen (15 nodos) y terminaba `Calidad: False` con "No changes detected vs origin/main: src/app/sw.ts" — AUNQUE 5.7 YA ESTABA ESCRITO EN DISCO.
+- **Causa raíz:** `workflow.py` `_file_changed_vs_main` usaba `git diff --diff-filter=A origin/main` como fallback. El filtro `A` solo detecta archivos NUEVOS; 5.6/5.7 MODIFICAN `sw.ts`/`layout.tsx` (existentes) → diff vacío → BLK-008 eterno. Explica por qué el motor nunca cerró 5.6/5.7.
+- **Corrección aplicada (hermes-factory, agente-side):** `--diff-filter=A` → `--name-only` en `_file_changed_vs_main` (workflow.py ~línea 288). Verificado aislado: `_file_changed_vs_main(sw.ts)` ahora devuelve True para 5.7.
+- **Nota:** 5.7 ya estaba implementado en disco (sesión/motor previo). El motor actual solo lo validaba y fallaba por este bug. Pendiente re-run del motor para confirmar cierre de 5.7.
+- **Pendiente (punto 6 del JOURNAL):** flags inválidos de Pi/Vibe + entorno Vibe (BLK-005) aún sin arreglar para que el motor ESCRIBA de nuevo; pero para 5.7 (ya en disco) el fix del verificador desbloquea el gate.
+
+## Siguiente
+- Re-run del motor para validar cierre de 5.7 tras el fix de BLK-009.
+- Luego 5.8 (metas iOS/Android en layout).

@@ -325,3 +325,16 @@ Compilation error: [WinError 2] El sistema no puede encontrar el archivo especif
 
 ### 2026-07-15 16:58:54 — Fallo en Calidad/Objetivo
 Compilation error: [WinError 2] El sistema no puede encontrar el archivo especificado | Objective failed: BLK-008 objective not met: No changes detected vs origin/main: src/app/sw.ts; No changes detected vs origin/main: src/app/layout.tsx
+
+### 2026-07-15 20:18:32 — Fallo en Calidad/Objetivo
+Compilation error: [WinError 2] El sistema no puede encontrar el archivo especificado
+
+### 2026-07-15 (última sesión) — BLK-009: _verify_objective no detecta MODIFICACIONES de archivos existentes [RESUELTO]
+Fecha: 2026-07-15 (sesión de corrección del motor)
+Bloquea: cierre de 5.6 / 5.7 vía motor A2A Factory (BLK-008 persistente).
+Síntoma: el motor entra en bucle infinito Pi→Vibe→Compiler→Qwen (hasta 15 nodos) y termina `Calidad: False` con "No changes detected vs origin/main: src/app/sw.ts" — AUN CUANDO 5.7 YA ESTABA ESCRITO EN DISCO (sw.ts con precacheEntries de /dashboard, /transacciones, /categorias, /transparencia; diff vs origin/main real confirmado).
+CAUSA RAÍZ: `workflow.py` `_file_changed_vs_main` usa `git diff --diff-filter=A origin/main` como fallback. El filtro `A` (Added) SOLO detecta archivos NUEVOS. 5.6/5.7 MODIFICAN `src/app/sw.ts` y `src/app/layout.tsx` (ya existentes) → el diff queda vacío → el motor cree que "no hubo cambios" → BLK-008 eterno. Esto explica por qué el motor NUNCA cerró 5.6 ni 5.7: el verificador no veía modificaciones de archivos existentes, fuera que los agentes escribieran o no.
+RESOLUCIÓN: cambiado `--diff-filter=A` por `--name-only` en `_file_changed_vs_main` (workflow.py ~línea 288). Verificado aislado: `_file_changed_vs_main(sw.ts)` ahora devuelve True para 5.7. (Nota: el primer diff de la función ya era `git diff origin/main` sin filtro; el fallback con A era el que fallaba. Ambos ahora detectan modificaciones.)
+Estado: RESUELTO en motor (workflow.py). Pendiente re-run del motor para validar cierre de 5.7.
+Regla: fallo LÓGICA del motor (verificador), corregido por Hermes. El fix es agente-side (hermes-factory), NO toca el arnés del proyecto.
+Contexto adicional: 5.7 ya estaba implementado en disco (por sesión/motor previo); el motor actual solo lo validaba y fallaba por este bug. Los flags inválidos de Pi/Vibe y el entorno de Vibe (BLK-005) siguen pendientes para que el motor ESCRIBA de nuevo, pero para 5.7 (ya en disco) el fix del verificador es lo que desbloquea el gate.

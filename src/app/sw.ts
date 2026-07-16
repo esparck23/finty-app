@@ -10,7 +10,7 @@ import { syncOfflineTransactions } from "../lib/offline/db";
 declare const self: any;
 
 /**
- * Service Worker de Finty — bloques 5.1, 5.3 y 5.6.
+ * Service Worker de Finty — bloques 5.1, 5.3, 5.6 y 5.7.
  *
  * - 5.1: cachea SOLO GET /api/categories y /api/transactions con
  *   NetworkFirst en `api-cache-v1`.
@@ -20,6 +20,12 @@ declare const self: any;
  *   (request.mode === "navigate") con NetworkFirst en `pages` y
  *   fallback a `/dashboard` desde el cache (warm-up en install +
  *   `setCatchHandler` para la red caída).
+ * - 5.7: precache de rutas clave (`/dashboard`, `/transacciones`,
+ *   `/categorias`, `/transparencia`) para carga sin red del app
+ *   shell. Estas entradas se SUMAN al `__SW_MANIFEST` autogenerado
+ *   por @serwist/next (que solo cubre assets estáticos de `public/`),
+ *   porque las rutas de App Router son server-rendered y no aparecen
+ *   en el manifest por defecto.
  *
  * NO interceptamos /api/* (deja pasar a la red), /sw.js ni assets
  * estáticos (los maneja el precache de Serwist).
@@ -29,8 +35,25 @@ const PAGES_CACHE_NAME = "pages";
 const OFFLINE_FALLBACK_URL = "/dashboard";
 const OFFLINE_FALLBACK_URLS = ["/dashboard", "/transparencia"];
 
+// 5.7 — Entradas explícitas del precache para rutas App Router que
+// el `__SW_MANIFEST` de Serwist no cubre (serwist solo escanea
+// `public/` y `_next/static/`). Usamos un revision estático por
+// entrada: las páginas son server-rendered y el contenido se
+// considera "estable" para la duración de un deploy. Si el contenido
+// cambia, basta con bumpear la revision (p. ej. `finty-routes-v2`).
+const PRECACHE_ROUTE_REVISION = "finty-routes-v1";
+const PRECACHE_ROUTE_ENTRIES: Array<{ url: string; revision: string }> = [
+  { url: "/dashboard", revision: PRECACHE_ROUTE_REVISION },
+  { url: "/transacciones", revision: PRECACHE_ROUTE_REVISION },
+  { url: "/categorias", revision: PRECACHE_ROUTE_REVISION },
+  { url: "/transparencia", revision: PRECACHE_ROUTE_REVISION },
+];
+
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: [
+    ...(self.__SW_MANIFEST || []),
+    ...PRECACHE_ROUTE_ENTRIES,
+  ],
   precacheOptions: {
     cleanupOutdatedCaches: true,
   },
