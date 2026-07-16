@@ -535,3 +535,76 @@ Precache explícito de las rutas App Router que `__SW_MANIFEST` autogenerado por
 ## Siguiente
 - Re-run del motor para validar cierre de 5.7 tras el fix de BLK-009.
 - Luego 5.8 (metas iOS/Android en layout).
+
+# 2026-07-15 (parte 4) — 5.8 ARRANCADO: Metas iOS/Android en layout
+
+## Constancia
+- Se deja registrado el arranque de 5.8 en el arnés: STATE.md (🔜 Sigue: 5.8, scope + criterio), STAGES.md (Sub-paso activo: 5.8; 5.7 ✅; Estado "finishing 5.8-5.9"; 5.8 🔄).
+- Flujo A2A según skill: Pi (scaffolding/delegación) → Vibe (pruebas) → Qoder (auditoría). El motor A2A Factory está dañado para escribir solo (punto 6 JOURNAL: flags inválidos Pi/Vibe + entorno Vibe), así que se delega Pi directo con flags válidos.
+- Contexto previo: layout.tsx YA tiene appleWebApp (capable:true, statusBarStyle, title) + icons.apple (/icons/apple-touch-icon.png) + manifest. Next.js 16 emite estas como metas HTML. 5.8 está mayormente cubierto desde 5.6; falta confirmar/inyectar metas literales apple-mobile-web-app-capable + status-bar-style si un navegador iOS las requiere explícitas.
+
+## Eventos
+- Pi lanzado (proc_fa1078fb78ca) con prompt del bloque 5.8 de STAGES + contexto de layout actual. Debe verificar si Next emite las metas y, si no, inyectarlas en <head> sin reescribir; luego build + tsc.
+- Pendiente al terminar Pi: Vibe (pruebas/verificación) y Qoder (auditoría de seguridad/deuda).
+
+## Siguiente
+- Al cerrar Pi: validar build/tsc, luego Vibe (pruebas) y Qoder (auditoría).
+- Marcar 5.8 ✅ en arnés y seguir a 5.9.
+
+## 2026-07-15 (parte 5) — 5.8 CERRADO: Metas iOS/Android en layout
+
+### Hallazgo de verificación
+- Next.js 16 **sí emite** desde `metadata.appleWebApp` (en `<head>` HTML renderizado): `apple-mobile-web-app-status-bar-style=black-translucent`, `apple-mobile-web-app-title=Finty`, y `<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180">` desde `metadata.icons.apple`.
+- Next.js 16 **NO emite** la meta literal `<meta name="apple-mobile-web-app-capable" content="yes">` (iOS Safari legacy / Add-to-Home-Screen la lee explícitamente). Solo emite la variante Android `<meta name="mobile-web-app-capable" content="yes">`.
+- Confirmado en build output: `grep -oE "apple-mobile-web-app-capable|mobile-web-app-capable" .next/server/app/*.html` → solo `mobile-web-app-capable` antes del fix.
+
+### Cambios aplicados
+- `src/app/layout.tsx`: edición mínima (8 líneas añadidas, 0 quitadas) — bloque `<head>` con un único `<meta name="apple-mobile-web-app-capable" content="yes" />` justo antes del `<body>`, con comentario explicativo. No se duplicaron las otras metas (status-bar-style, apple-touch-icon, manifest, theme-color) que Next.js ya emite correctamente.
+- `manifest.ts` y `apple-icon.tsx` intactos; el manifest ya está vinculado vía `<link rel="manifest" href="/manifest.webmanifest">` y el apple-touch-icon via `metadata.icons.apple` + convención `apple-icon.tsx`.
+
+### Validación
+- `npm run build` → ✅ verde (21 páginas estáticas, 11 API routes, proxy middleware).
+- `npx tsc --noEmit` → ✅ 0 errores.
+- `npm test` → ✅ 18/18 pasan (sin regresiones de tests de 5.1-5.7).
+- HTML post-build: las 3 etiquetas del criterio (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon`) presentes en dashboard, categories, transactions, login, _not-found.
+- `git diff src/app/layout.tsx` → 8 líneas (+8, -0) aisladas al scope.
+
+### Criterio de aceptación 5.8
+✅ `src/app/layout.tsx` contiene `apple-mobile-web-app-capable` (meta inyectada) y `apple-touch-icon` (en `icons.apple.url` y en comentario).
+✅ build verde, tsc 0 errores.
+✅ manifest vinculado (`<link rel="manifest" href="/manifest.webmanifest">` x2 en cada página, vía `metadata.manifest` + `icons.other`).
+✅ theme-color presente (light + dark) desde `viewport.themeColor`.
+✅ 0 cambios en API routes, proxy.ts, middleware, public/sw.js, src/app/sw.ts.
+
+## Siguiente
+- Marcar 5.8 ✅ en STAGES.md y STATE.md.
+- Siguiente sub-paso: 5.9 (verificación móvil real: prompt de instalación aparece en iOS Safari y abrir offline sirve la app sin Vercel).
+
+### Nota de flujo A2A (parte 5.8) — Vibe y Qoder bloqueados por infra
+- **Vibe (pruebas):** lanzado (proc_1f4bf2544491) pero crasheó con `ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'` — es el **BLK-005**: Vibe instalado vía `uv` necesita su venv propio; al heredar PYTHONPATH de Hermes se rompe. La validación de Vibe (confirmar metas en HTML emitido) se hizo **directamente** inspeccionando `.next/server/app/*.html` (equivalente y verificado: todas las metas iOS/Android presentes).
+- **Qoder (auditoría):** lanzado (proc_362c519d60c3) pero falló con `FORBIDDEN {"code":"112"}` — límite de cuenta/API de Qoder (no es fallo del proyecto; similar a BLK-003 previo). Auditoría de seguridad/deuda del SW no disponible en este momento.
+- **Conclusión:** 5.8 se cierra por implementación de Pi + validación directa (HTML) + build/tsc/test verdes. Vibe/Qoder no participaron por límites de infraestructura, no por fallo de 5.8.
+- **Pendiente (no bloquea 5.8/5.9):** arreglar entorno Vibe (BLK-005) y reintentar Qoder cuando se libere el límite, para cerrar el flujo A2A completo en etapas futuras.
+
+# 2026-07-15 (parte 6) — Etapa 5 LISTA para prueba manual consolidada (5.9 pendiente tuya)
+
+## Resumen
+- Sub-pasos 5.1→5.8 ✅ COMPLETADOS y verificados (build verde, tsc 0 errores, 18 tests OK, HTML PWA emitido correctamente).
+- 5.9 (verificación móvil real) queda 🔄 **PENDIENTE DE TU PRUEBA MANUAL** en dispositivo físico (iOS Safari / Android Chrome). No es automatizable headless de forma fiable.
+- El arnés fue actualizado: STATE (🔜 Sigue: 5.9, ¿Acción tuya? SÍ), STAGES (5.9 🔄 + checklist incrustado), y este JOURNAL.
+
+## Checklist 5.9 (firmar aquí al validar en tu móvil)
+1. ⬜ iOS Safari: Add to Home Screen → ícono aparece; abrir app → modo avión → carga offline (sin error).
+2. ⬜ Android Chrome: "Instalar app" aparece; instalar; abrir offline → sirve app shell.
+3. ⬜ Offline deep-link: cerrar app, abrir `/transacciones` offline → abre (NavigationRoute 5.6 + precache 5.7).
+4. ⬜ Background sync (5.3): crear transacción offline → online → reenviada vía `/api/transactions`.
+
+## Qué tienes para probar (consolidado)
+- Rama `feat/5.x_offline-finishing` con PR #17 abierto (incluye 5.6 + 5.7 + arnés).
+- Cambios de 5.8 (layout.tsx) ya en la rama, sin commitear aún en este turno.
+- Al mergear PR #17 + commitear 5.8, el preview de Vercel de la rama es el build para instalar en tu teléfono y validar 5.9.
+
+## Siguiente
+- Tú validas 5.9 en móvil y firmas el checklist en JOURNAL.
+- Al confirmar 5.9: marcar 5.9 ✅ y arrancar Etapa 6 (6.1 Diseño API de Reportes).
+- Pendiente infra (no bloquea): arreglar Vibe (BLK-005) y reintentar Qoder para cerrar flujo A2A en Etapa 6.

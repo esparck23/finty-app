@@ -1,10 +1,8 @@
-🟢 Salud: 🟢 Salud: Verde
-Hecho: 
-🔜 Sigue: Próxima iteración desde prompt cargado.
-Acción / Scope: Modificar src/app/layout.tsx para inyectar metas iOS en <head> (apple-mobile-web-app-capable ya viene vía metadata.appleWebApp.capable; asegurar apple-mobile-web-app-status-bar-style explícito + apple-touch-icon). NO reescribir layout.
-Criterio medible: layout.tsx contiene `apple-mobile-web-app-capable` y `apple-touch-icon` (o equivalente inyectado); build verde; tsc 0 errores; 17+ tests pasando.
-⚠️ Riesgo: Compilation error: [WinError 2] El sistema no puede encontrar el archivo especificado
-No tocar: rutas API, proxy.ts, middleware, public/sw.js (generado), sw.ts.
-¿Acción tuya?: SÍ
-
-\1./sandbox (Quality Gate FAILED)
+🟢 Salud: Verde
+Hecho: 5.8 — Metas iOS/Android en layout (meta apple-mobile-web-app-capable inyectada; status-bar + apple-touch-icon emitidos por Next; manifest vinculado).
+🔜 Sigue: 5.9 — Verificación móvil real (pendiente de prueba manual tuya en dispositivo físico).
+Acción / Scope: checklist manual en móvil real (iOS Safari Add-to-Home + Android Chrome). Confirmar que el prompt de instalación aparece y que abrir offline sirve la app (app shell cacheado por 5.6/5.7).
+Criterio medible: checklist manual firmado en JOURNAL; build verde de toda Etapa 5.
+⚠️ Riesgo: depende de dispositivo físico; no automatizable headless.
+No tocar: rutas API, proxy.ts, middleware, public/sw.js (generado), src/app/sw.ts, src/app/layout.tsx.
+¿Acción tuya?: SÍ: validar 5.9 en tu móvil (instalar PWA + abrir offline) y firmar checklist en JOURNAL.

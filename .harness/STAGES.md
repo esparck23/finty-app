@@ -91,7 +91,7 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
  Estado: 🔄 EN PROGRESO (finishing 5.6-5.9)
  Fecha cierre: 2026-07-14 (5.1-5.5)
  Dependencias: Etapa 4 completa
- Sub-paso activo: 5.7 — Precache de rutas clave (instalar/ver offline)
+ Sub-paso activo: 5.8 — Metas iOS/Android en layout (instalar/ver offline)
  	Sub-pasos (ejecutar UNO a la vez como criterio de aceptación, cada uno es un scope acotado):
 
 5.1 — Service Worker base (Serwist) (✅ COMPLETADO - 2026-07-10)
@@ -142,24 +142,30 @@ Notas: Recharts 3.9.2 instalado. /transparencia usa /api/public/summary. Dashboa
   Criterio medible (OBLIGATORIO): tras el build, `src/app/sw.ts` contiene `NavigationRoute` (o handling de request.mode==='navigate') y fallback a /dashboard cacheado; `npm run build` verde; `npx tsc --noEmit` 0 errores; `npm test` 17+ pasando.
   NO tocar: rutas API, proxy.ts, middleware, public/sw.js (generado).
 
-5.7 — Precache de rutas clave
+5.7 — Precache de rutas clave (✅ COMPLETADO - 2026-07-15)
   Estado: ✅ COMPLETADO - 2026-07-15
   Archivos a modificar: `src/app/sw.ts` (EXTIENDE 5.6).
   Scope: incluir rutas clave (/dashboard, /transacciones, /categorias) en el manifest del SW (precacheEntries) para carga sin red.
   Criterio medible: `src/app/sw.ts` incluye las rutas en precacheEntries; build verde; tsc 0 errores.
   Implementación: `precacheEntries: [...(self.__SW_MANIFEST || []), ...PRECACHE_ROUTE_ENTRIES]` con revision estático `finty-routes-v1`. Cuatro rutas precacheadas: /dashboard, /transacciones, /categorias, /transparencia. Confirmado en public/sw.js compilado. Tests 18 OK.
 
-5.8 — Metas iOS/Android en layout
+5.8 — Metas iOS/Android en layout (✅ COMPLETADO - 2026-07-15)
   Archivos a modificar: `src/app/layout.tsx` (MODIFICAR: inyectar metas en <head>).
   Scope: inyectar meta apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style, y confirmar apple-touch-icon (ya existe via `src/app/apple-icon.tsx`). Android: theme-color ya presente; asegurar manifest vinculado.
   Criterio medible: `src/app/layout.tsx` contiene `apple-mobile-web-app-capable` y `apple-touch-icon`; build verde; tsc 0 errores.
+  Estado: ✅ COMPLETADO - 2026-07-15. Next.js 16 emite status-bar-style y apple-touch-icon desde metadata; se inyecta solo apple-mobile-web-app-capable (que Next 16 no emite).
 
-5.9 — Verificación móvil real
+5.9 — Verificación móvil real (🔄 PENDIENTE validación manual)
   Scope: en móvil real, el prompt de instalación aparece y abrir offline sirve la app (no consume Vercel).
   Criterio medible: checklist manual firmado en JOURNAL; build verde.
+  CHECKLIST PARA PRUEBA MANUAL (firmar en JOURNAL al validar):
+  1. iOS Safari: Add to Home Screen → ícono aparece; abrir app → modo avión → carga offline (NO error).
+  2. Android Chrome: opción "Instalar app" aparece; instalar; abrir offline → sirve app shell.
+  3. Offline deep-link: cerrar app, abrir URL /transacciones estando offline → abre (NavigationRoute 5.6 + precache 5.7).
+  4. Background sync (5.3): crear transacción offline → online → reenviada vía /api/transactions.
 
-**Estado Etapa 5: 🔄 EN PROGRESO (finishing 5.8-5.9)**
-Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅, 5.6 ✅, 5.7 ✅, 5.8 ⬜, 5.9 ⬜. Base: 18 tests Jest, build rc 0. Rama: feat/5.x_offline-finishing. Siguiente tras 5.9: Etapa 6 Reportes.
+**Estado Etapa 5: 🔄 EN PROGRESO (finishing 5.9 — verificación móvil manual)**
+Sub-pasos: 5.1 ✅, 5.2 ✅, 5.3 ✅, 5.4 ✅, 5.5 ✅, 5.6 ✅, 5.7 ✅, 5.8 ✅, 5.9 🔄. Base: 18 tests Jest, build rc 0. Rama: feat/5.x_offline-finishing. Siguiente tras 5.9 (validación manual): Etapa 6 Reportes.
 
  
 **Etapa 6 — Automatización de Reportes
