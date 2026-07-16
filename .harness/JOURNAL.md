@@ -608,3 +608,50 @@ Precache explícito de las rutas App Router que `__SW_MANIFEST` autogenerado por
 - Tú validas 5.9 en móvil y firmas el checklist en JOURNAL.
 - Al confirmar 5.9: marcar 5.9 ✅ y arrancar Etapa 6 (6.1 Diseño API de Reportes).
 - Pendiente infra (no bloquea): arreglar Vibe (BLK-005) y reintentar Qoder para cerrar flujo A2A en Etapa 6.
+
+# 2026-07-15 (parte 7) — Bugs de prueba manual 5.9 (4 hallazgos) + fixes
+
+## Hallazgos del usuario (preview PR #17)
+1. No permite registrar transacciones/categorías o editar (offline).
+2. El OCR (escáner de factura con IA) debe quedar deshabilitado cuando está offline.
+3. Transparencia pierde el menú al pasar entre módulos; debe garantizar que quien hace login ve el menú, no así quien no hace login.
+4. Al recargar la app por error se pierde la conexión (muestra "necesitas internet para volver a cargar").
+
+## Causas raíz diagnosticadas
+1. `useTransactions`/`useCategories` llaman al API directo; `lib/offline/db.ts` (saveOfflineTransaction/syncOfflineTransactions de 5.2/5.3) NO se usa desde la UI.
+2. `useScanner.scan()` hace `fetch('/api/scan')` sin chequear `navigator.onLine`.
+3. `transparencia/layout.tsx` (server) usa `user ? <AppShell> : <div>`; al navegar SPA el SW sirve la versión cacheada sin AppShell; no hay auth cliente para decidir el menú.
+4. `sw.ts` `setCatchHandler` solo busca `/dashboard` y `/transparencia` en cache `pages`; `/transactions` (precache 5.7) no se sirve en recarga offline.
+
+## Plan de fix (edición directa, motor dañado)
+- Bug 1: conectar UI a la cola offline (transacciones + categorías) en `useTransactions`/`useCategories`; si `!navigator.onLine`, encolar en IndexedDB + disparar sync.
+- Bug 2: en `useScanner.scan()`, cortar si `!navigator.onLine` con error claro.
+- Bug 3: `transparencia/layout.tsx` siempre `<AppShell>`; `AppShell` usa `useAuthStatus()` (nuevo hook `/api/auth/me`) para ocultar Sidebar si no autenticado.
+- Bug 4: en `sw.ts` `setCatchHandler`, buscar también en precache global (`caches.match(event.request)`) antes del fallback; ampliar `OFFLINE_FALLBACK_URLS`.
+
+## Siguiente
+- Aplicar los 4 fixes, build + tsc + tests, commitear en rama, PR/merge.
+
+# 2026-07-15 (parte 8) — Fixes 5.9 aplicados y validados
+
+## Cambios (edición directa, motor dañado)
+- **Bug 1 (offline transacciones/categorías):**
+  - `lib/offline/db.ts`: agregadas `saveOfflineCategory`, `syncOfflineCategories`, `triggerOfflineSync` (cola IndexedDB + background sync + mensaje al SW).
+  - `hooks/useTransactions.ts`: `createTransaction`/`updateTransaction` encolan en IndexedDB si `!navigator.onLine` y disparan sync.
+  - `hooks/useCategories.ts`: `addCategory` encola offline si `!navigator.onLine`.
+- **Bug 2 (OCR offline):** `hooks/useScanner.ts`: `scan()` corta con error claro si `!navigator.onLine`.
+- **Bug 3 (menú transparencia):**
+  - `app/api/auth/me/route.ts`: nuevo endpoint (usa `getAuthUser`).
+  - `hooks/useAuthStatus.ts`: hook cliente que consulta `/api/auth/me`.
+  - `components/layout/AppShell.tsx`: oculta Sidebar si no autenticado (`isAuthenticated`).
+  - `app/transparencia/layout.tsx`: siempre usa `<AppShell>` (menú persistente al navegar).
+- **Bug 4 (recarga offline):** `app/sw.ts`: `setCatchHandler` busca la URL en precache global (`caches.match`) antes del fallback; `OFFLINE_FALLBACK_URLS` incluye ahora `/transacciones` y `/categorias`. SW sincroniza también categorías.
+
+## Validación
+- `npx tsc --noEmit` → ✅ 0 errores.
+- `npm run build` → ✅ verde (rutas /transparencia, /transactions, /categories presentes).
+- `npm test` → ✅ 18/18 (4 suites). El stack trace en log es `console.error` esperado en `sync.test.ts` simulando fallo de sync, no fallo de test.
+
+## Siguiente
+- Commitear en rama y abrir/actualizar PR.
+- Usuario re-valida 5.9 en preview (firmar checklist) → cerrar Etapa 5 → Etapa 6.

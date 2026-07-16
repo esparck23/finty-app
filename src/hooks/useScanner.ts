@@ -33,6 +33,15 @@ export function useScanner(): UseScannerReturn {
 
   const scan = useCallback(async (file: File) => {
     reset();
+
+    // Bug 2 (5.9): OCR requiere conexión; cortar offline con error claro.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setError('El escáner con IA requiere conexión a internet. Vuelve a intentarlo cuando estés en línea.');
+      setStatus('error');
+      setProgress('Requiere conexión');
+      return;
+    }
+
     try {
       // Crear preview de la imagen antes de procesar
       setPreview(URL.createObjectURL(file));

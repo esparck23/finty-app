@@ -4,10 +4,23 @@ import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Menu } from 'lucide-react';
 import { Toaster } from '@/components/ui/Toaster';
+import { useAuthStatus } from '@/hooks/useAuthStatus';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(true);
+  const { isAuthenticated } = useAuthStatus();
+
+  // Bug 3 (5.9): el menú (Sidebar) solo se muestra si el usuario está
+  // autenticado. Quien no hace login no ve el menú.
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-300">
+        {children}
+        <Toaster />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-300">

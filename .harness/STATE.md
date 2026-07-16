@@ -1,8 +1,8 @@
 🟢 Salud: Verde
-Hecho: 5.8 — Metas iOS/Android en layout (meta apple-mobile-web-app-capable inyectada; status-bar + apple-touch-icon emitidos por Next; manifest vinculado).
-🔜 Sigue: 5.9 — Verificación móvil real (pendiente de prueba manual tuya en dispositivo físico).
-Acción / Scope: checklist manual en móvil real (iOS Safari Add-to-Home + Android Chrome). Confirmar que el prompt de instalación aparece y que abrir offline sirve la app (app shell cacheado por 5.6/5.7).
-Criterio medible: checklist manual firmado en JOURNAL; build verde de toda Etapa 5.
-⚠️ Riesgo: depende de dispositivo físico; no automatizable headless.
-No tocar: rutas API, proxy.ts, middleware, public/sw.js (generado), src/app/sw.ts, src/app/layout.tsx.
-¿Acción tuya?: SÍ: validar 5.9 en tu móvil (instalar PWA + abrir offline) y firmar checklist en JOURNAL.
+Hecho: 5.9 — Bugs de prueba manual corregidos (4 hallazgos: offline transacciones/categorías, OCR offline, menú transparencia, recarga offline).
+🔜 Sigue: Re-validar 5.9 en móvil (firmar checklist) y cerrar Etapa 5.
+Acción / Scope: tras merge de los fixes, re-probar en preview: registrar/editar offline, OCR bloqueado offline, menú transparencia persistente, recarga offline sirve app.
+Criterio medible: checklist 5.9 firmado en JOURNAL; build verde; tsc 0 errores; 18 tests OK.
+⚠️ Riesgo: bajo; la cola offline depende de background sync del navegador (fallback por mensaje al SW incluido).
+No tocar: rutas API (salvo /api/auth/me nuevo), public/sw.js (generado).
+¿Acción tuya?: SÍ: re-validar 5.9 en preview y firmar checklist.

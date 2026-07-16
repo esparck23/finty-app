@@ -5,7 +5,7 @@ import {
   PrecacheFallbackPlugin,
   CacheableResponsePlugin,
 } from "serwist";
-import { syncOfflineTransactions } from "../lib/offline/db";
+import { syncOfflineTransactions, syncOfflineCategories } from "../lib/offline/db";
 
 declare const self: any;
 
@@ -33,7 +33,12 @@ declare const self: any;
 
 const PAGES_CACHE_NAME = "pages";
 const OFFLINE_FALLBACK_URL = "/dashboard";
-const OFFLINE_FALLBACK_URLS = ["/dashboard", "/transparencia"];
+const OFFLINE_FALLBACK_URLS = [
+  "/dashboard",
+  "/transacciones",
+  "/categorias",
+  "/transparencia",
+];
 
 // 5.7 — Entradas explícitas del precache para rutas App Router que
 // el `__SW_MANIFEST` de Serwist no cubre (serwist solo escanea
@@ -105,6 +110,14 @@ navigationRoute.setCatchHandler(async ({ event }: any) => {
     return Response.error();
   }
 
+  // Bug 4 (5.9): en recarga offline, servir la propia URL desde el precache
+  // global de Serwist (que incluye las rutas de 5.7: /transacciones, etc.)
+  // antes de caer al fallback de /dashboard.
+  const precached = await caches.match(event.request);
+  if (precached) {
+    return precached;
+  }
+
   const cache = await caches.open(PAGES_CACHE_NAME);
   for (const url of OFFLINE_FALLBACK_URLS) {
     const cached = await cache.match(url);
@@ -170,12 +183,22 @@ self.addEventListener("activate", (event: any) => {
 
 self.addEventListener("sync", (event: any) => {
   if (event.tag === "sync-transactions") {
-    event.waitUntil(syncOfflineTransactions());
+    event.waitUntil(
+      (async () => {
+        await syncOfflineTransactions();
+        await syncOfflineCategories();
+      })()
+    );
   }
 });
 
 self.addEventListener("message", (event: any) => {
   if (event.data && event.data.type === "SYNC_TRANSACTIONS") {
-    event.waitUntil(syncOfflineTransactions());
+    event.waitUntil(
+      (async () => {
+        await syncOfflineTransactions();
+        await syncOfflineCategories();
+      })()
+    );
   }
 });

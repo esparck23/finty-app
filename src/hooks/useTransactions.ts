@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import type { Transaction, TransactionInput } from '@/types/transaction';
+import { saveOfflineTransaction, triggerOfflineSync } from '@/lib/offline/db';
 
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -30,6 +31,22 @@ export function useTransactions() {
     setIsLoading(true);
     setError(null);
     try {
+      // Bug 1 (5.9): offline → encolar en IndexedDB + disparar sync.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        const offlineTx: Transaction = {
+          ...data,
+          id: `offline_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          created_at: new Date().toISOString(),
+          processed_at: null,
+          receipt_url: null,
+          original_image_url: null,
+        } as Transaction;
+        await saveOfflineTransaction(offlineTx);
+        await triggerOfflineSync();
+        setTransactions((prev) => [offlineTx, ...prev]);
+        return offlineTx;
+      }
+
       const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,6 +69,22 @@ export function useTransactions() {
     setIsLoading(true);
     setError(null);
     try {
+      // Bug 1 (5.9): offline → encolar edición en IndexedDB + disparar sync.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        const offlineTx: Transaction = {
+          ...data,
+          id,
+          created_at: new Date().toISOString(),
+          processed_at: null,
+          receipt_url: null,
+          original_image_url: null,
+        } as Transaction;
+        await saveOfflineTransaction(offlineTx);
+        await triggerOfflineSync();
+        setTransactions((prev) => prev.map((t) => (t.id === id ? offlineTx : t)));
+        return offlineTx;
+      }
+
       const res = await fetch(`/api/transactions/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
