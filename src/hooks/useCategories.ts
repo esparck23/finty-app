@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { Category } from '@/types/transaction';
+import { saveOfflineCategory, triggerOfflineSync } from '@/lib/offline/db';
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -24,6 +25,21 @@ export function useCategories() {
 
   const addCategory = async (name: string, type: 'income' | 'expense' | 'exchange') => {
     try {
+      // Bug 1 (5.9): offline → encolar en IndexedDB + disparar sync.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        const offlineCat = {
+          id: `offline_cat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          name,
+          type,
+          is_offline_sync: false,
+        };
+        await saveOfflineCategory(offlineCat);
+        await triggerOfflineSync();
+        const created = { id: offlineCat.id, name, type } as Category;
+        setCategories((prev) => [...prev, created]);
+        return created;
+      }
+
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

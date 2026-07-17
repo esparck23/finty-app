@@ -54,6 +54,14 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      {/* PWA 5.8 — iOS Add-to-Home-Screen metas. Next.js 16 ya emite
+          apple-mobile-web-app-status-bar-style y apple-touch-icon desde
+          metadata.appleWebApp / icons.apple; esta meta faltante
+          (apple-mobile-web-app-capable) debe inyectarse manualmente
+          para que iOS Safari ofrezca el prompt de instalación. */}
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
       <body className="min-h-full flex flex-col bg-slate-950 text-slate-300 pb-10">
         <SwRegister />
         {children}

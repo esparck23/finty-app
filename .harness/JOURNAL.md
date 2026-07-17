@@ -496,5 +496,187 @@ Se aplicaron las correcciones del **punto 6** en `nodes.py`:
 
 ## Siguiente
 - **5.6 marcado como completado** en `STATE.md`.
-- **Etapa 5 cerrada** (5.1-5.6 ✅).
-- **Próximo paso:** 6.1 — Diseño de API de Reportes (`/api/reports`).
+- **Sub-pasos 5.1-5.6 ✅** (5.7-5.9 pendientes para cerrar Etapa 5 — ver STAGES.md).
+- **Próximo paso:** 5.7 — Precache de rutas clave en `precacheEntries`.
+
+# 2026-07-15 (parte 3) — Etapa 5.7: Precache de rutas clave COMPLETADO
+
+## Resumen
+Precache explícito de las rutas App Router que `__SW_MANIFEST` autogenerado por @serwist/next **no cubre** (serwist solo escanea `public/` y `_next/static/`; las páginas server-rendered no entran). Se añadieron `/dashboard`, `/transacciones`, `/categorias` y `/transparencia` a `precacheEntries` con un revision estático (`finty-routes-v1`) para garantizar carga sin red del app shell.
+
+## Eventos
+- **Modificación de `src/app/sw.ts`:** se extendió el SW existente (5.1/5.3/5.6) **sin reescribirlo desde cero**. `precacheEntries: self.__SW_MANIFEST` se reemplazó por `[...(self.__SW_MANIFEST || []), ...PRECACHE_ROUTE_ENTRIES]`. El `NavigationRoute` de 5.6 y el `install` warm-up del cache `pages` siguen intactos: precache (oficial de Serwist) y pages cache (estrategia 5.6) coexisten.
+- **Verificación de compilación:** `public/sw.js` (generado) contiene `precacheEntries:[...staticAssets,{url:"/dashboard",revision:"finty-routes-v1"},{url:"/transacciones",...},{url:"/categorias",...},{url:"/transparencia",...}]` — confirmado con grep.
+- **Validación del Quality Gate:**
+  - `npm run build`: ✅ **Verde** (Next.js 16.2.10 + Serwist 9.5.11).
+  - `npx tsc --noEmit`: ✅ **0 errores**.
+  - `npm test`: ✅ **18 tests pasando** (4 suites: currency, db, sync, sw).
+
+## Métricas
+- Agentes: Pi (scaffolding directo, scope acotado a sw.ts).
+- Impacto en código: `src/app/sw.ts` (1 archivo, extensión de 5.6).
+- No se tocaron: rutas API, `src/proxy.ts`, `middleware`, `public/sw.js` (generado), `src/app/layout.tsx`.
+
+## Siguiente
+- **5.7 marcado como completado** en `STATE.md`.
+- **Siguiente sub-paso:** 5.8 — Metas iOS/Android en layout (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, confirmar `apple-touch-icon`).
+
+### 2026-07-15 — Ejecución Automática Factory
+- Pipeline ejecutado de inicio a fin de forma nativa.
+- Control de calidad: Fallado (bucle de reparación BLK-008).
+
+### 2026-07-15 (última sesión) — RESOLUCIÓN BLK-009: motor no detectaba modificaciones de archivos existentes
+- **Hallazgo:** el motor corría el bucle completo Pi→Vibe→Compiler→Qwen (15 nodos) y terminaba `Calidad: False` con "No changes detected vs origin/main: src/app/sw.ts" — AUNQUE 5.7 YA ESTABA ESCRITO EN DISCO.
+- **Causa raíz:** `workflow.py` `_file_changed_vs_main` usaba `git diff --diff-filter=A origin/main` como fallback. El filtro `A` solo detecta archivos NUEVOS; 5.6/5.7 MODIFICAN `sw.ts`/`layout.tsx` (existentes) → diff vacío → BLK-008 eterno. Explica por qué el motor nunca cerró 5.6/5.7.
+- **Corrección aplicada (hermes-factory, agente-side):** `--diff-filter=A` → `--name-only` en `_file_changed_vs_main` (workflow.py ~línea 288). Verificado aislado: `_file_changed_vs_main(sw.ts)` ahora devuelve True para 5.7.
+- **Nota:** 5.7 ya estaba implementado en disco (sesión/motor previo). El motor actual solo lo validaba y fallaba por este bug. Pendiente re-run del motor para confirmar cierre de 5.7.
+- **Pendiente (punto 6 del JOURNAL):** flags inválidos de Pi/Vibe + entorno Vibe (BLK-005) aún sin arreglar para que el motor ESCRIBA de nuevo; pero para 5.7 (ya en disco) el fix del verificador desbloquea el gate.
+
+## Siguiente
+- Re-run del motor para validar cierre de 5.7 tras el fix de BLK-009.
+- Luego 5.8 (metas iOS/Android en layout).
+
+# 2026-07-15 (parte 4) — 5.8 ARRANCADO: Metas iOS/Android en layout
+
+## Constancia
+- Se deja registrado el arranque de 5.8 en el arnés: STATE.md (🔜 Sigue: 5.8, scope + criterio), STAGES.md (Sub-paso activo: 5.8; 5.7 ✅; Estado "finishing 5.8-5.9"; 5.8 🔄).
+- Flujo A2A según skill: Pi (scaffolding/delegación) → Vibe (pruebas) → Qoder (auditoría). El motor A2A Factory está dañado para escribir solo (punto 6 JOURNAL: flags inválidos Pi/Vibe + entorno Vibe), así que se delega Pi directo con flags válidos.
+- Contexto previo: layout.tsx YA tiene appleWebApp (capable:true, statusBarStyle, title) + icons.apple (/icons/apple-touch-icon.png) + manifest. Next.js 16 emite estas como metas HTML. 5.8 está mayormente cubierto desde 5.6; falta confirmar/inyectar metas literales apple-mobile-web-app-capable + status-bar-style si un navegador iOS las requiere explícitas.
+
+## Eventos
+- Pi lanzado (proc_fa1078fb78ca) con prompt del bloque 5.8 de STAGES + contexto de layout actual. Debe verificar si Next emite las metas y, si no, inyectarlas en <head> sin reescribir; luego build + tsc.
+- Pendiente al terminar Pi: Vibe (pruebas/verificación) y Qoder (auditoría de seguridad/deuda).
+
+## Siguiente
+- Al cerrar Pi: validar build/tsc, luego Vibe (pruebas) y Qoder (auditoría).
+- Marcar 5.8 ✅ en arnés y seguir a 5.9.
+
+## 2026-07-15 (parte 5) — 5.8 CERRADO: Metas iOS/Android en layout
+
+### Hallazgo de verificación
+- Next.js 16 **sí emite** desde `metadata.appleWebApp` (en `<head>` HTML renderizado): `apple-mobile-web-app-status-bar-style=black-translucent`, `apple-mobile-web-app-title=Finty`, y `<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180">` desde `metadata.icons.apple`.
+- Next.js 16 **NO emite** la meta literal `<meta name="apple-mobile-web-app-capable" content="yes">` (iOS Safari legacy / Add-to-Home-Screen la lee explícitamente). Solo emite la variante Android `<meta name="mobile-web-app-capable" content="yes">`.
+- Confirmado en build output: `grep -oE "apple-mobile-web-app-capable|mobile-web-app-capable" .next/server/app/*.html` → solo `mobile-web-app-capable` antes del fix.
+
+### Cambios aplicados
+- `src/app/layout.tsx`: edición mínima (8 líneas añadidas, 0 quitadas) — bloque `<head>` con un único `<meta name="apple-mobile-web-app-capable" content="yes" />` justo antes del `<body>`, con comentario explicativo. No se duplicaron las otras metas (status-bar-style, apple-touch-icon, manifest, theme-color) que Next.js ya emite correctamente.
+- `manifest.ts` y `apple-icon.tsx` intactos; el manifest ya está vinculado vía `<link rel="manifest" href="/manifest.webmanifest">` y el apple-touch-icon via `metadata.icons.apple` + convención `apple-icon.tsx`.
+
+### Validación
+- `npm run build` → ✅ verde (21 páginas estáticas, 11 API routes, proxy middleware).
+- `npx tsc --noEmit` → ✅ 0 errores.
+- `npm test` → ✅ 18/18 pasan (sin regresiones de tests de 5.1-5.7).
+- HTML post-build: las 3 etiquetas del criterio (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon`) presentes en dashboard, categories, transactions, login, _not-found.
+- `git diff src/app/layout.tsx` → 8 líneas (+8, -0) aisladas al scope.
+
+### Criterio de aceptación 5.8
+✅ `src/app/layout.tsx` contiene `apple-mobile-web-app-capable` (meta inyectada) y `apple-touch-icon` (en `icons.apple.url` y en comentario).
+✅ build verde, tsc 0 errores.
+✅ manifest vinculado (`<link rel="manifest" href="/manifest.webmanifest">` x2 en cada página, vía `metadata.manifest` + `icons.other`).
+✅ theme-color presente (light + dark) desde `viewport.themeColor`.
+✅ 0 cambios en API routes, proxy.ts, middleware, public/sw.js, src/app/sw.ts.
+
+## Siguiente
+- Marcar 5.8 ✅ en STAGES.md y STATE.md.
+- Siguiente sub-paso: 5.9 (verificación móvil real: prompt de instalación aparece en iOS Safari y abrir offline sirve la app sin Vercel).
+
+### Nota de flujo A2A (parte 5.8) — Vibe y Qoder bloqueados por infra
+- **Vibe (pruebas):** lanzado (proc_1f4bf2544491) pero crasheó con `ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'` — es el **BLK-005**: Vibe instalado vía `uv` necesita su venv propio; al heredar PYTHONPATH de Hermes se rompe. La validación de Vibe (confirmar metas en HTML emitido) se hizo **directamente** inspeccionando `.next/server/app/*.html` (equivalente y verificado: todas las metas iOS/Android presentes).
+- **Qoder (auditoría):** lanzado (proc_362c519d60c3) pero falló con `FORBIDDEN {"code":"112"}` — límite de cuenta/API de Qoder (no es fallo del proyecto; similar a BLK-003 previo). Auditoría de seguridad/deuda del SW no disponible en este momento.
+- **Conclusión:** 5.8 se cierra por implementación de Pi + validación directa (HTML) + build/tsc/test verdes. Vibe/Qoder no participaron por límites de infraestructura, no por fallo de 5.8.
+- **Pendiente (no bloquea 5.8/5.9):** arreglar entorno Vibe (BLK-005) y reintentar Qoder cuando se libere el límite, para cerrar el flujo A2A completo en etapas futuras.
+
+# 2026-07-15 (parte 6) — Etapa 5 LISTA para prueba manual consolidada (5.9 pendiente tuya)
+
+## Resumen
+- Sub-pasos 5.1→5.8 ✅ COMPLETADOS y verificados (build verde, tsc 0 errores, 18 tests OK, HTML PWA emitido correctamente).
+- 5.9 (verificación móvil real) queda 🔄 **PENDIENTE DE TU PRUEBA MANUAL** en dispositivo físico (iOS Safari / Android Chrome). No es automatizable headless de forma fiable.
+- El arnés fue actualizado: STATE (🔜 Sigue: 5.9, ¿Acción tuya? SÍ), STAGES (5.9 🔄 + checklist incrustado), y este JOURNAL.
+
+## Checklist 5.9 (firmar aquí al validar en tu móvil)
+1. ⬜ iOS Safari: Add to Home Screen → ícono aparece; abrir app → modo avión → carga offline (sin error).
+2. ⬜ Android Chrome: "Instalar app" aparece; instalar; abrir offline → sirve app shell.
+3. ⬜ Offline deep-link: cerrar app, abrir `/transacciones` offline → abre (NavigationRoute 5.6 + precache 5.7).
+4. ⬜ Background sync (5.3): crear transacción offline → online → reenviada vía `/api/transactions`.
+
+## Qué tienes para probar (consolidado)
+- Rama `feat/5.x_offline-finishing` con PR #17 abierto (incluye 5.6 + 5.7 + arnés).
+- Cambios de 5.8 (layout.tsx) ya en la rama, sin commitear aún en este turno.
+- Al mergear PR #17 + commitear 5.8, el preview de Vercel de la rama es el build para instalar en tu teléfono y validar 5.9.
+
+## Siguiente
+- Tú validas 5.9 en móvil y firmas el checklist en JOURNAL.
+- Al confirmar 5.9: marcar 5.9 ✅ y arrancar Etapa 6 (6.1 Diseño API de Reportes).
+- Pendiente infra (no bloquea): arreglar Vibe (BLK-005) y reintentar Qoder para cerrar flujo A2A en Etapa 6.
+
+# 2026-07-15 (parte 7) — Bugs de prueba manual 5.9 (4 hallazgos) + fixes
+
+## Hallazgos del usuario (preview PR #17)
+1. No permite registrar transacciones/categorías o editar (offline).
+2. El OCR (escáner de factura con IA) debe quedar deshabilitado cuando está offline.
+3. Transparencia pierde el menú al pasar entre módulos; debe garantizar que quien hace login ve el menú, no así quien no hace login.
+4. Al recargar la app por error se pierde la conexión (muestra "necesitas internet para volver a cargar").
+
+## Causas raíz diagnosticadas
+1. `useTransactions`/`useCategories` llaman al API directo; `lib/offline/db.ts` (saveOfflineTransaction/syncOfflineTransactions de 5.2/5.3) NO se usa desde la UI.
+2. `useScanner.scan()` hace `fetch('/api/scan')` sin chequear `navigator.onLine`.
+3. `transparencia/layout.tsx` (server) usa `user ? <AppShell> : <div>`; al navegar SPA el SW sirve la versión cacheada sin AppShell; no hay auth cliente para decidir el menú.
+4. `sw.ts` `setCatchHandler` solo busca `/dashboard` y `/transparencia` en cache `pages`; `/transactions` (precache 5.7) no se sirve en recarga offline.
+
+## Plan de fix (edición directa, motor dañado)
+- Bug 1: conectar UI a la cola offline (transacciones + categorías) en `useTransactions`/`useCategories`; si `!navigator.onLine`, encolar en IndexedDB + disparar sync.
+- Bug 2: en `useScanner.scan()`, cortar si `!navigator.onLine` con error claro.
+- Bug 3: `transparencia/layout.tsx` siempre `<AppShell>`; `AppShell` usa `useAuthStatus()` (nuevo hook `/api/auth/me`) para ocultar Sidebar si no autenticado.
+- Bug 4: en `sw.ts` `setCatchHandler`, buscar también en precache global (`caches.match(event.request)`) antes del fallback; ampliar `OFFLINE_FALLBACK_URLS`.
+
+## Siguiente
+- Aplicar los 4 fixes, build + tsc + tests, commitear en rama, PR/merge.
+
+# 2026-07-15 (parte 8) — Fixes 5.9 aplicados y validados
+
+## Cambios (edición directa, motor dañado)
+- **Bug 1 (offline transacciones/categorías):**
+  - `lib/offline/db.ts`: agregadas `saveOfflineCategory`, `syncOfflineCategories`, `triggerOfflineSync` (cola IndexedDB + background sync + mensaje al SW).
+  - `hooks/useTransactions.ts`: `createTransaction`/`updateTransaction` encolan en IndexedDB si `!navigator.onLine` y disparan sync.
+  - `hooks/useCategories.ts`: `addCategory` encola offline si `!navigator.onLine`.
+- **Bug 2 (OCR offline):** `hooks/useScanner.ts`: `scan()` corta con error claro si `!navigator.onLine`.
+- **Bug 3 (menú transparencia):**
+  - `app/api/auth/me/route.ts`: nuevo endpoint (usa `getAuthUser`).
+  - `hooks/useAuthStatus.ts`: hook cliente que consulta `/api/auth/me`.
+  - `components/layout/AppShell.tsx`: oculta Sidebar si no autenticado (`isAuthenticated`).
+  - `app/transparencia/layout.tsx`: siempre usa `<AppShell>` (menú persistente al navegar).
+- **Bug 4 (recarga offline):** `app/sw.ts`: `setCatchHandler` busca la URL en precache global (`caches.match`) antes del fallback; `OFFLINE_FALLBACK_URLS` incluye ahora `/transacciones` y `/categorias`. SW sincroniza también categorías.
+
+## Validación
+- `npx tsc --noEmit` → ✅ 0 errores.
+- `npm run build` → ✅ verde (rutas /transparencia, /transactions, /categories presentes).
+- `npm test` → ✅ 18/18 (4 suites). El stack trace en log es `console.error` esperado en `sync.test.ts` simulando fallo de sync, no fallo de test.
+
+## Siguiente
+- Commitear en rama y abrir/actualizar PR.
+- Usuario re-valida 5.9 en preview (firmar checklist) → cerrar Etapa 5 → Etapa 6.
+
+# 2026-07-15 (parte 9) — Reapertura: PWA no instalable tras 5.9 (solo acceso directo)
+
+## Reporte usuario
+- Commit `551c2b4` (5.8) SÍ instalaba la app (prompt de instalación) en preview Vercel.
+- Commit `30f63fd` (fixes 5.9) NO instala: solo "acceso directo".
+- Commit `5e5843d` (revert de caches.match en sw.ts) tampoco resolvió.
+
+## Hipótesis descartadas (verificadas en local)
+1. El SW `setCatchHandler` con `caches.match(event.request)` — revertido en 5e5843d, no resolvió.
+2. `proxy.ts` redirigiendo el manifest — **proxy.ts NO es middleware** (no hay `middleware.ts` en el repo; proxy.ts no se importa en ningún lado, está muerto). Añadir `/manifest.webmanifest` a su `publicPaths` no tuvo efecto; se revirtió.
+3. SW matcher atrapando `/manifest.webmanifest` — el matcher solo cubre `/api/categories` y `/api/transactions`; navigationRoute usa matcher por defecto de Serwist (excluye rutas con extensión). No intercepta el manifest.
+
+## Hallazgo local anómalo
+- Servidor local (`npm start`) responde `/manifest.webmanifest` → **307 Redirect → /login** (tanto con como sin cookie `auth_token`).
+- `/transparencia` → 200, `/icons/512` → 200, `/sw.js` → 200. Solo el manifest redirige.
+- NO hay `middleware.ts`, NO hay `vercel.json`, NO hay route que redirija el manifest, y `proxy.ts` está muerto. La causa de la 307 local NO está en el código fuente visible.
+
+## Pendiente diagnosticar
+- La 307 local no se explica por el código. El reporte original es en **preview de Vercel**, donde el comportamiento puede diferir (¿hay middleware/handler en el deploy de Vercel no presente en el repo local? ¿o el SW cacheó una 307 stale en el preview?).
+- Confirmar en Vercel preview: (a) si `/manifest.webmanifest` da 200 o 307; (b) si el SW se registra (DevTools → Application → Service Workers); (c) si existe un middleware activo en el deploy.
+- Revisar también si el cambio de `transparencia/layout.tsx` (ahora siempre AppShell + useAuthStatus fetch /api/auth/me) altera el orden de registro del SW o el momento en que el navegador evalúa el manifest.
+
+## Siguiente
+- No aplicar más cambios ciegos. Pedir al usuario evidencia del preview Vercel (HTTP status de /manifest.webmanifest, estado del SW en DevTools) para aislar la causa real.
