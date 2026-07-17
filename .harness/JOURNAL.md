@@ -655,3 +655,28 @@ Precache explícito de las rutas App Router que `__SW_MANIFEST` autogenerado por
 ## Siguiente
 - Commitear en rama y abrir/actualizar PR.
 - Usuario re-valida 5.9 en preview (firmar checklist) → cerrar Etapa 5 → Etapa 6.
+
+# 2026-07-15 (parte 9) — Reapertura: PWA no instalable tras 5.9 (solo acceso directo)
+
+## Reporte usuario
+- Commit `551c2b4` (5.8) SÍ instalaba la app (prompt de instalación) en preview Vercel.
+- Commit `30f63fd` (fixes 5.9) NO instala: solo "acceso directo".
+- Commit `5e5843d` (revert de caches.match en sw.ts) tampoco resolvió.
+
+## Hipótesis descartadas (verificadas en local)
+1. El SW `setCatchHandler` con `caches.match(event.request)` — revertido en 5e5843d, no resolvió.
+2. `proxy.ts` redirigiendo el manifest — **proxy.ts NO es middleware** (no hay `middleware.ts` en el repo; proxy.ts no se importa en ningún lado, está muerto). Añadir `/manifest.webmanifest` a su `publicPaths` no tuvo efecto; se revirtió.
+3. SW matcher atrapando `/manifest.webmanifest` — el matcher solo cubre `/api/categories` y `/api/transactions`; navigationRoute usa matcher por defecto de Serwist (excluye rutas con extensión). No intercepta el manifest.
+
+## Hallazgo local anómalo
+- Servidor local (`npm start`) responde `/manifest.webmanifest` → **307 Redirect → /login** (tanto con como sin cookie `auth_token`).
+- `/transparencia` → 200, `/icons/512` → 200, `/sw.js` → 200. Solo el manifest redirige.
+- NO hay `middleware.ts`, NO hay `vercel.json`, NO hay route que redirija el manifest, y `proxy.ts` está muerto. La causa de la 307 local NO está en el código fuente visible.
+
+## Pendiente diagnosticar
+- La 307 local no se explica por el código. El reporte original es en **preview de Vercel**, donde el comportamiento puede diferir (¿hay middleware/handler en el deploy de Vercel no presente en el repo local? ¿o el SW cacheó una 307 stale en el preview?).
+- Confirmar en Vercel preview: (a) si `/manifest.webmanifest` da 200 o 307; (b) si el SW se registra (DevTools → Application → Service Workers); (c) si existe un middleware activo en el deploy.
+- Revisar también si el cambio de `transparencia/layout.tsx` (ahora siempre AppShell + useAuthStatus fetch /api/auth/me) altera el orden de registro del SW o el momento en que el navegador evalúa el manifest.
+
+## Siguiente
+- No aplicar más cambios ciegos. Pedir al usuario evidencia del preview Vercel (HTTP status de /manifest.webmanifest, estado del SW en DevTools) para aislar la causa real.
