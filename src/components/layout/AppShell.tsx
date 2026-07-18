@@ -9,7 +9,18 @@ import { useAuthStatus } from '@/hooks/useAuthStatus';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(true);
-  const { isAuthenticated } = useAuthStatus();
+  const { isAuthenticated, loading } = useAuthStatus();
+
+  // Mientras se resuelve la sesión, mostrar spinner para evitar
+  // race condition: si renderizamos !isAuthenticated antes de que
+  // el fetch de /api/auth/me termine, el router entra en estado incoherente.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Bug 3 (5.9): el menú (Sidebar) solo se muestra si el usuario está
   // autenticado. Quien no hace login no ve el menú.
@@ -21,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-300">
