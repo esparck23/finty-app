@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { db } from '@/lib/db';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -14,22 +13,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  try {
-    const result = await db.execute({
-      sql: 'SELECT id FROM users WHERE id = ?',
-      args: [token]
-    });
-
-    if (result.rows.length === 0) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js|.*\\.png$).*)'],
+  // Excluye todo lo que Next.js necesita internamente:
+  // _next (static, data, RSC payloads), íconos, sw, manifests y assets.
+  matcher: ['/((?!_next|favicon.ico|icons|sw\.js|sw-register|manifest\.webmanifest|manifest\.json|.*\.(?:png|svg|ico|webp|woff2?|css)$).*)'],
 };

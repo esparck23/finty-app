@@ -5,9 +5,100 @@ import {
   PrecacheFallbackPlugin,
   CacheableResponsePlugin,
 } from "serwist";
-import { syncOfflineTransactions, syncOfflineCategories } from "../lib/offline/db";
 
 declare const self: any;
+
+// ── Sync helpers inline (usan self.indexedDB, seguro en SW) ──────────
+const DB_NAME = "finty_offline_db";
+const TX_STORE = "offline_transactions";
+const CAT_STORE = "offline_categories";
+const DB_VERSION = 1;
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const idb = self.indexedDB;
+    if (!idb) { resolve(null as any); return; }
+    const req = idb.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(TX_STORE)) db.createObjectStore(TX_STORE, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(CAT_STORE)) db.createObjectStore(CAT_STORE, { keyPath: "id" });
+    };
+  });
+}
+
+function getAllFromStore(db: IDBDatabase, storeName: string): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    try {
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => resolve(req.result || []);
+    } catch { resolve([]); }
+  });
+}
+
+function markSyncedInStore(db: IDBDatabase, storeName: string, id: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      const req = store.get(id);
+      req.onsuccess = () => {
+        const item = req.result;
+        if (!item) { resolve(); return; }
+        item.is_offline_sync = true;
+        store.put(item);
+        resolve();
+      };
+      req.onerror = () => reject(req.error);
+    } catch { resolve(); }
+  });
+}
+
+async function swSyncTransactions(): Promise<void> {
+  const db = await openDB();
+  if (!db) return;
+  const txs = await getAllFromStore(db, TX_STORE);
+  for (const t of txs.filter((x: any) => !x.is_offline_sync)) {
+    try {
+      const res = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: t.type, amount_usd: t.amount_usd, amount_bs: t.amount_bs,
+          currency_primary: t.currency_primary, category_id: t.category_id,
+          description: t.description || "", receipt_url: t.receipt_url || "",
+          transaction_date: t.transaction_date, receipt_type: t.receipt_type,
+          provider_name: t.provider_name, tax_id: t.tax_id,
+          document_type: t.document_type, transfer_provider: t.transfer_provider,
+          transfer_operation: t.transfer_operation,
+          original_image_url: t.original_image_url, processed_at: t.processed_at,
+        }),
+      });
+      if (res.ok) await markSyncedInStore(db, TX_STORE, t.id);
+    } catch { /* retry en próximo sync */ }
+  }
+}
+
+async function swSyncCategories(): Promise<void> {
+  const db = await openDB();
+  if (!db) return;
+  const cats = await getAllFromStore(db, CAT_STORE);
+  for (const c of cats.filter((x: any) => !x.is_offline_sync)) {
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: c.name, type: c.type }),
+      });
+      if (res.ok) await markSyncedInStore(db, CAT_STORE, c.id);
+    } catch { /* retry en próximo sync */ }
+  }
+}
 
 /**
  * Service Worker de Finty — bloques 5.1, 5.3, 5.6 y 5.7.
@@ -40,24 +131,11 @@ const OFFLINE_FALLBACK_URLS = [
   "/transparencia",
 ];
 
-// 5.7 — Entradas explícitas del precache para rutas App Router que
-// el `__SW_MANIFEST` de Serwist no cubre (serwist solo escanea
-// `public/` y `_next/static/`). Usamos un revision estático por
-// entrada: las páginas son server-rendered y el contenido se
-// considera "estable" para la duración de un deploy. Si el contenido
-// cambia, basta con bumpear la revision (p. ej. `finty-routes-v2`).
-const PRECACHE_ROUTE_REVISION = "finty-routes-v1";
-const PRECACHE_ROUTE_ENTRIES: Array<{ url: string; revision: string }> = [
-  { url: "/dashboard", revision: PRECACHE_ROUTE_REVISION },
-  { url: "/transacciones", revision: PRECACHE_ROUTE_REVISION },
-  { url: "/categorias", revision: PRECACHE_ROUTE_REVISION },
-  { url: "/transparencia", revision: PRECACHE_ROUTE_REVISION },
-];
+
 
 const serwist = new Serwist({
   precacheEntries: [
     ...(self.__SW_MANIFEST || []),
-    ...PRECACHE_ROUTE_ENTRIES,
   ],
   precacheOptions: {
     cleanupOutdatedCaches: true,
@@ -136,37 +214,13 @@ serwist.registerRoute(navigationRoute);
 serwist.addEventListeners();
 
 self.addEventListener("install", (event: any) => {
+  // skipWaiting: activa el nuevo SW inmediatamente sin esperar a que
+  // los clientes existentes lo liberen.
+  // El caché de páginas se llena automáticamente vía NavigationRoute
+  // la primera vez que el usuario visita cada ruta (con conexión).
+  // El warm-up agresivo de 4 rutas en paralelo saturaba Turso y
+  // causaba que /api/auth/me tardara >5s, disparando el bucle de recarga.
   self.skipWaiting();
-  // Warm-up del cache de páginas: la primera vez que el SW se instala
-  // (online), hacemos fetch de /dashboard y /transparencia y las
-  // guardamos en el cache "pages" para que estén disponibles offline
-  // sin depender del precache (Next.js App Router no precachea rutas
-  // de servidor). Best-effort: si no hay red, lo dejamos para la
-  // siguiente activación.
-  event.waitUntil(
-    (async () => {
-      try {
-        const cache = await caches.open(PAGES_CACHE_NAME);
-        await Promise.all(
-          OFFLINE_FALLBACK_URLS.map(async (url) => {
-            try {
-              const res = await fetch(url, {
-                credentials: "same-origin",
-                redirect: "follow",
-              });
-              if (res && res.ok) {
-                await cache.put(url, res.clone());
-              }
-            } catch {
-              // Sin red: se llenará en la próxima visita online.
-            }
-          }),
-        );
-      } catch {
-        // El warm-up es best-effort.
-      }
-    })(),
-  );
 });
 
 self.addEventListener("activate", (event: any) => {
@@ -177,8 +231,8 @@ self.addEventListener("sync", (event: any) => {
   if (event.tag === "sync-transactions") {
     event.waitUntil(
       (async () => {
-        await syncOfflineTransactions();
-        await syncOfflineCategories();
+        await swSyncTransactions();
+        await swSyncCategories();
       })()
     );
   }
@@ -188,8 +242,8 @@ self.addEventListener("message", (event: any) => {
   if (event.data && event.data.type === "SYNC_TRANSACTIONS") {
     event.waitUntil(
       (async () => {
-        await syncOfflineTransactions();
-        await syncOfflineCategories();
+        await swSyncTransactions();
+        await swSyncCategories();
       })()
     );
   }
